@@ -1730,7 +1730,7 @@
     </property>
     
     <property>
-        <name>oozie.service.LiteWorkflowStoreService.user.retry.inteval</name>
+        <name>oozie.service.LiteWorkflowStoreService.user.retry.interval</name>
         <value>10</value>
         <description>
             Automatic retry interval for workflow action is in minutes and the default value is 10 minutes.

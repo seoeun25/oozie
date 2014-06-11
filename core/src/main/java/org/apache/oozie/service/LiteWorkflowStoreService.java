@@ -58,7 +58,11 @@ public abstract class LiteWorkflowStoreService extends WorkflowStoreService {
     public static final String CONF_PREFIX = Service.CONF_PREFIX + "LiteWorkflowStoreService.";
     public static final String CONF_PREFIX_USER_RETRY = CONF_PREFIX + "user.retry.";
     public static final String CONF_USER_RETRY_MAX = CONF_PREFIX_USER_RETRY + "max";
+    /**
+     * @deprecated Use {@link LiteWorkflowStoreService#CONF_USER_RETRY_INTERVAL} .
+     */
     public static final String CONF_USER_RETRY_INTEVAL = CONF_PREFIX_USER_RETRY + "inteval";
+    public static final String CONF_USER_RETRY_INTERVAL = CONF_PREFIX_USER_RETRY + "interval";
     public static final String CONF_USER_RETRY_ERROR_CODE = CONF_PREFIX_USER_RETRY + "error.code";
     public static final String CONF_USER_RETRY_ERROR_CODE_EXT = CONF_PREFIX_USER_RETRY + "error.code.ext";
 
@@ -136,7 +140,7 @@ public abstract class LiteWorkflowStoreService extends WorkflowStoreService {
 
     private static int getUserRetryInterval(NodeHandler.Context context) throws WorkflowException {
         Configuration conf = Services.get().get(ConfigurationService.class).getConf();
-        int ret = conf.getInt(CONF_USER_RETRY_INTEVAL, 5);
+        int ret = conf.getInt(CONF_USER_RETRY_INTEVAL, conf.getInt(CONF_USER_RETRY_INTERVAL, 10));
         String userRetryInterval = context.getNodeDef().getUserRetryInterval();
 
         if (!userRetryInterval.equals("null")) {

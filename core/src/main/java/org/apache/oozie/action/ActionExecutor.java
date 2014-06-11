@@ -206,7 +206,7 @@ public abstract class ActionExecutor {
 
 
     /**
-     * Define the default inteval in seconds between retries.
+     * Define the default interval in seconds between retries.
      */
     public static final long RETRY_INTERVAL = 60;
 

@@ -39,6 +39,7 @@ import org.apache.oozie.executor.jpa.CoordActionGetForExternalIdJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowActionsGetForJobJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobGetJPAExecutor;
 import org.apache.oozie.service.ActionService;
+import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.LiteWorkflowStoreService;
 import org.apache.oozie.service.SchemaService;
@@ -217,6 +218,49 @@ public class TestActionErrors extends XDataTestCase {
         assertTrue(true);
     }
     
+    /**
+     * Tests for correct functionality when a {@link org.apache.oozie.action.ActionExecutorException.ErrorType#ERROR} is
+     * generated when executing start. </p> Checks for user retry is applied to actions for
+     * {@link LiteWorkflowStoreService#CONF_USER_RETRY_INTEVAL}=7.
+     *
+     * @throws Exception
+     */
+    public void testStartErrorWithUserRetryInteval() throws Exception {
+        Configuration configuration = Services.get().get(ConfigurationService.class).getConf();
+        configuration.set(LiteWorkflowStoreService.CONF_USER_RETRY_INTEVAL, String.valueOf(7));
+        _testErrorWithUserRetryInterval("start.error", "error", "based_on_action_status", 7);
+        assertTrue(true);
+    }
+
+    /**
+     * Tests for correct functionality when a {@link org.apache.oozie.action.ActionExecutorException.ErrorType#ERROR} is
+     * generated when executing start. </p> Checks for user retry is applied to actions for
+     * {@link LiteWorkflowStoreService#CONF_USER_RETRY_INTERVAL}=8.
+     *
+     * @throws Exception
+     */
+    public void testStartErrorWithUserRetryInterval() throws Exception {
+        Configuration configuration = Services.get().get(ConfigurationService.class).getConf();
+        configuration.set(LiteWorkflowStoreService.CONF_USER_RETRY_INTERVAL, String.valueOf(8));
+        _testErrorWithUserRetryInterval("start.error", "error", "based_on_action_status", 8);
+        assertTrue(true);
+    }
+
+    /**
+     * Tests for correct functionality when a {@link org.apache.oozie.action.ActionExecutorException.ErrorType#ERROR} is
+     * generated when executing start. </p> Checks for user retry is applied to actions for
+     * {@link LiteWorkflowStoreService#CONF_USER_RETRY_INTEVAL}=7.
+     *
+     * @throws Exception
+     */
+    public void testStartErrorWithUserRetryIntervalBackward() throws Exception {
+        Configuration configuration = Services.get().get(ConfigurationService.class).getConf();
+        configuration.set(LiteWorkflowStoreService.CONF_USER_RETRY_INTEVAL, String.valueOf(7));
+        configuration.set(LiteWorkflowStoreService.CONF_USER_RETRY_INTERVAL, String.valueOf(8));
+        _testErrorWithUserRetryInterval("start.error", "error", "based_on_action_status", 7);
+        assertTrue(true);
+    }
+
     /**
      * Tests for the job to be KILLED and status set to FAILED in case an Action Handler does not call setExecutionData
      * in it's start() implementation.
@@ -611,6 +655,63 @@ public class TestActionErrors extends XDataTestCase {
         }
         assertNotNull(action);
         assertEquals(2, action.getUserRetryCount());
+    }
+
+    /**
+     * Provides functionality to test user retry
+     *
+     * @param errorType the error type. (start.non-transient, end.non-transient)
+     * @param externalStatus the external status to set.
+     * @param signalValue the signal value to set.
+     * @param expected the retry interval to be expected.
+     * @throws Exception
+     */
+    private void _testErrorWithUserRetryInterval(String errorType, String externalStatus, String signalValue, final int expected) throws Exception {
+        String workflowPath = getTestCaseFileUri("workflow.xml");
+        Reader reader = IOUtils.getResourceAsReader("wf-ext-schema-valid.xml", -1);
+        Writer writer = new FileWriter(new File(getTestCaseDir(), "workflow.xml"));
+        IOUtils.copyCharStream(reader, writer);
+
+        final DagEngine engine = new DagEngine("u");
+        Configuration conf = new XConfiguration();
+        conf.set(OozieClient.APP_PATH, workflowPath);
+        conf.set(OozieClient.USER_NAME, getTestUser());
+
+        conf.set(OozieClient.LOG_TOKEN, "t");
+        conf.set("error", errorType);
+        conf.set("external-status", externalStatus);
+        conf.set("signal-value", signalValue);
+
+        final String jobId = engine.submitJob(conf, true);
+
+        final JPAService jpaService = Services.get().get(JPAService.class);
+        final WorkflowJobGetJPAExecutor wfJobGetCmd = new WorkflowJobGetJPAExecutor(jobId);
+
+        final WorkflowActionsGetForJobJPAExecutor actionsGetExecutor = new WorkflowActionsGetForJobJPAExecutor(jobId);
+        waitFor(5000, new Predicate() {
+            public boolean evaluate() throws Exception {
+                List<WorkflowActionBean> actions = jpaService.execute(actionsGetExecutor);
+                WorkflowActionBean action = null;
+                for (WorkflowActionBean bean : actions) {
+                    if (bean.getType().equals("test")) {
+                        action = bean;
+                        break;
+                    }
+                }
+                return (action != null && action.getUserRetryInterval() == expected);
+            }
+        });
+
+        List<WorkflowActionBean> actions = jpaService.execute(actionsGetExecutor);
+        WorkflowActionBean action = null;
+        for (WorkflowActionBean bean : actions) {
+            if (bean.getType().equals("test")) {
+                action = bean;
+                break;
+            }
+        }
+        assertNotNull(action);
+        assertEquals(expected, action.getUserRetryInterval());
     }
 
     /**
