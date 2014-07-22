@@ -17,6 +17,8 @@
  */
 package org.apache.oozie.lock;
 
+import org.apache.oozie.util.XLog;
+
 import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -52,7 +54,7 @@ public class MemoryLocks {
         @Override
         public void release() {
             int val = rwLock.getQueueLength();
-            if (val == 0) {
+            if (val == 0 && rwLock.getWriteHoldCount() == 0 && rwLock.getReadHoldCount() == 0) {
                 synchronized (locks) {
                     locks.remove(resource);
                 }
@@ -114,11 +116,13 @@ public class MemoryLocks {
         else {
             if (wait > 0) {
                 if (!lock.tryLock(wait, TimeUnit.MILLISECONDS)) {
+                    XLog.getLog(getClass()).info("Fail to tryLock [{0}] ", lock.toString());
                     return null;
                 }
             }
             else {
                 if (!lock.tryLock()) {
+                    XLog.getLog(getClass()).info("Fail to tryLock [{0}] ", lock.toString());
                     return null;
                 }
             }
