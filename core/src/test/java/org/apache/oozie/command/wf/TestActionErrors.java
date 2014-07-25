@@ -28,6 +28,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.DagEngine;
+import org.apache.oozie.ErrorCode;
 import org.apache.oozie.ForTestingActionExecutor;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
@@ -195,7 +196,7 @@ public class TestActionErrors extends XDataTestCase {
         _testError("end.error", "ok", "OK");
         assertTrue(true);
     }
-    
+
     /**
      * Tests for correct functionality when a {@link org.apache.oozie.action.ActionExecutorException.ErrorType#ERROR} is
      * generated when executing start. </p> Checks for user retry is applied to actions for specified retry-max=2.
@@ -206,7 +207,7 @@ public class TestActionErrors extends XDataTestCase {
     	_testErrorWithUserRetry("start.error", "error", "based_on_action_status");
         assertTrue(true);
     }
-    
+
     /**
      * Tests for correct functionality when a {@link org.apache.oozie.action.ActionExecutorException.ErrorType#ERROR} is
      * generated when executing end. </p> Checks for user retry is applied to actions for specified retry-max=2.
@@ -217,7 +218,7 @@ public class TestActionErrors extends XDataTestCase {
     	_testErrorWithUserRetry("end.error", "ok", "OK");
         assertTrue(true);
     }
-    
+
     /**
      * Tests for the job to be KILLED and status set to FAILED in case an Action Handler does not call setExecutionData
      * in it's start() implementation.
@@ -289,6 +290,58 @@ public class TestActionErrors extends XDataTestCase {
         assertEquals("TEST_ERROR", action.getErrorCode());
         assertEquals("end", action.getErrorMessage());
         assertEquals(WorkflowAction.Status.ERROR, action.getStatus());
+    }
+
+    /**
+     * Provides functionality to test kill node message
+     *
+     * @throws Exception
+     */
+    public void testKillNodeErrorMessageFail() throws Exception {
+        String workflowPath = getTestCaseFileUri("workflow.xml");
+        Reader reader = IOUtils.getResourceAsReader("wf-test-kill-node-message-fail.xml", -1);
+        Writer writer = new FileWriter(new File(getTestCaseDir(), "workflow.xml"));
+        IOUtils.copyCharStream(reader, writer);
+
+        final DagEngine engine = new DagEngine("u");
+        Configuration conf = new XConfiguration();
+        conf.set(OozieClient.APP_PATH, workflowPath);
+        conf.set(OozieClient.USER_NAME, getTestUser());
+
+        conf.set(OozieClient.LOG_TOKEN, "t");
+        conf.set("error", "end.error");
+        conf.set("external-status", "FAILED/KILLED");
+        conf.set("signal-value", "fail");
+
+        final String jobId = engine.submitJob(conf, true);
+
+        final JPAService jpaService = Services.get().get(JPAService.class);
+        final WorkflowJobGetJPAExecutor wfJobGetCmd = new WorkflowJobGetJPAExecutor(jobId);
+
+        waitFor(50000, new Predicate() {
+            public boolean evaluate() throws Exception {
+                WorkflowJobBean job = jpaService.execute(wfJobGetCmd);
+                return (job.getWorkflowInstance().getStatus() == WorkflowInstance.Status.FAILED);
+            }
+        });
+
+        WorkflowJobBean job = jpaService.execute(wfJobGetCmd);
+        assertEquals(WorkflowJob.Status.FAILED, job.getStatus());
+
+        WorkflowActionsGetForJobJPAExecutor wfActionsGetCmd = new WorkflowActionsGetForJobJPAExecutor(jobId);
+        List<WorkflowActionBean> actions = jpaService.execute(wfActionsGetCmd);
+
+        int n = actions.size();
+        WorkflowActionBean action = null;
+        for (WorkflowActionBean bean : actions) {
+            if (bean.getType().equals(":KILL:")) {
+                action = bean;
+                break;
+            }
+        }
+        assertNotNull(action);
+        assertEquals(ErrorCode.E0729.toString(), action.getErrorCode());
+        assertEquals(WorkflowAction.Status.FAILED, action.getStatus());
     }
 
     /**
