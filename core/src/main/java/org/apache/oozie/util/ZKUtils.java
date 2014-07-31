@@ -192,6 +192,9 @@ public class ZKUtils {
         sDiscovery.start();
         sDiscovery.registerService(getMetadataInstance());
 
+        ServiceInstance<Map> sInstance = getMetadataInstance();
+        log.info("---- sInstance : \n" + sInstance.toString());
+
         // Create the service discovery cache
         sCache = sDiscovery.serviceCacheBuilder().name(ZK_OOZIE_SERVICE).build();
         sCache.start();

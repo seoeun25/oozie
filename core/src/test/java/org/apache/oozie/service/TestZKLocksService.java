@@ -195,10 +195,14 @@ public class TestZKLocksService extends ZKXTestCase {
         StringBuffer sb = new StringBuffer("");
         Locker l1 = new WriteLocker("a", 1, 0, sb, zkls1);
         Locker l2 = new WriteLocker("a", 2, 0, sb, zkls2);
+        ZKLocksService zkls3 = new ZKLocksService();
+        zkls3.init(Services.get());
+        Locker l3 = new WriteLocker("a", 3, 0, sb, zkls3);
 
         new Thread(l1).start();
         sleep(1000);
         new Thread(l2).start();
+        new Thread(l3).start();
         sleep(1000);
         l1.finish();
         sleep(1000);

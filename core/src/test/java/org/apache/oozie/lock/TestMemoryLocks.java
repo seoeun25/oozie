@@ -20,6 +20,9 @@ package org.apache.oozie.lock;
 import org.apache.oozie.test.XTestCase;
 import org.apache.oozie.util.XLog;
 
+import java.util.List;
+import java.util.Map;
+
 public class TestMemoryLocks extends XTestCase {
     private XLog log = XLog.getLog(getClass());
 
@@ -51,16 +54,20 @@ public class TestMemoryLocks extends XTestCase {
 
         public void run() {
             try {
+                System.out.println(" start : " + Thread.currentThread().getName());
+                printDebug(locks.getLockInfos());
                 log.info("Getting lock [{0}]", nameIndex);
                 MemoryLocks.MemoryLockToken token = getLock();
+                System.out.println(" after getLock : " + Thread.currentThread().getName());
+                printDebug(locks.getLockInfos());
                 if (token != null) {
                     log.info("Got lock [{0}]", nameIndex);
                     sb.append(nameIndex + "-L ");
                     synchronized (this) {
-                        wait();
+                        //wait();
                     }
                     sb.append(nameIndex + "-U ");
-                    token.release();
+                    //token.release();
                     log.info("Release lock [{0}]", nameIndex);
                 }
                 else {
@@ -120,6 +127,35 @@ public class TestMemoryLocks extends XTestCase {
         l2.finish();
         Thread.sleep(500);
         assertEquals("a:1-L a:1-U a:2-L a:2-U", sb.toString().trim());
+    }
+
+    public void testWaitWriteLock2() throws Exception {
+        StringBuffer sb = new StringBuffer("");
+        Locker l1 = new WriteLocker("a", 1, -1, sb);
+        Locker l2 = new WriteLocker("a", 2, -1, sb);
+//        Locker l3 = new WriteLocker("a", 3, -1, sb);
+//        Locker l4 = new WriteLocker("a", 4, -1, sb);
+
+        new Thread(l1).start();
+        Thread.sleep(500);
+        new Thread(l2).start();
+        Thread.sleep(500);
+        //l1.finish();
+        Thread.sleep(5);
+        //new Thread(l3).start();
+        //l2.finish();
+        //Thread.sleep(500);
+        //new Thread(l4).start();
+        //l2.finish();
+        Thread.sleep(500);
+        assertEquals("a:1-L a:1-U a:2-L a:2-U", sb.toString().trim());
+    }
+
+    public void printDebug(Map<String,List<String>> lockInfos) {
+        for (Map.Entry<String,List<String>> entry: lockInfos.entrySet()) {
+            List<String> infos = entry.getValue();
+            System.out.println(entry.getKey() + " >>  " + infos.toString());
+        }
     }
 
     public void testNoWaitWriteLock() throws Exception {

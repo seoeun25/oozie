@@ -17,10 +17,19 @@
  */
 package org.apache.oozie.lock;
 
+import org.apache.oozie.util.XLog;
+
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.concurrent.locks.Lock;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * In memory resource locking that provides READ/WRITE lock capabilities.
@@ -130,4 +139,97 @@ public class MemoryLocks {
         }
         return new MemoryLockToken(lockEntry, lock, resource);
     }
+
+    public void lockInfos(){
+        XLog LOG = XLog.getLog(MemoryLocks.class);
+        ReentrantReadWriteLock lockEntry;
+        for (Map.Entry<String, ReentrantReadWriteLock> entry: locks.entrySet()) {
+            LOG.info("  -- " + entry.getKey());
+            System.out.println(" -------- " + entry.getKey());
+            lockEntry = entry.getValue();
+            Lock readLock = lockEntry.readLock();
+            Lock writeLock = lockEntry.writeLock();
+            LOG.info("---- readLock : " + readLock + ", writeLock : " + writeLock);
+            System.out.println("---- lock : " + lockEntry.toString());
+            System.out.println("---- readLock : "+ readLock.toString());
+            System.out.println("---- writeLock : "+  writeLock.toString());
+            int queueLength = lockEntry.getQueueLength();
+            LOG.info("---- queueLength : " + queueLength);
+            System.out.println("---- queueLength : " + queueLength);
+        }
+    }
+
+    public Map<String,List<String>> getLockInfos(){
+        Map<String,List<String>> lockInfos = new HashMap<String,List<String>>();
+        ReentrantReadWriteLock lockEntry;
+        for (Map.Entry<String, ReentrantReadWriteLock> entry: locks.entrySet()) {
+            List<String> info = lockInfos.get(entry.getKey());
+            if (info == null) {
+                info = new ArrayList<String>();
+                lockInfos.put(entry.getKey(), info);
+            }
+            lockEntry = entry.getValue();
+            //info.add(extractInfo(lockEntry.toString()));
+            info.add("Write lock = " + extractInfo(lockEntry.writeLock().toString()));
+            info.add(extractInfo(lockEntry.readLock().toString()));
+        }
+        //test3();
+        return lockInfos;
+    }
+
+    public String extractInfo(String lockInfo) {
+        String pattern = "^.*?(\\[)(.*?)(\\])";
+        StringBuilder sb = new StringBuilder();
+        Pattern p = Pattern.compile(pattern);
+        Matcher m = p.matcher(lockInfo);
+        if (lockInfo.matches(pattern)) {
+            while (m.find()) {
+                sb.append(m.group(2));
+            }
+        }
+        else {
+            sb.append(lockInfo);
+        }
+        return sb.toString();
+    }
+
+    public void test3() {
+        String input = "User clientId=23421. Some more text clientId=33432. This clientNum=100";
+
+        Pattern p = Pattern.compile("(clientId=)(\\d+)");
+        Matcher m = p.matcher(input);
+
+        StringBuffer result = new StringBuffer();
+        while (m.find()) {
+            System.out.println("Found a " + m.group() + ".");
+            System.out.println("Masking: " + m.group(2));
+            m.appendReplacement(result, m.group(1) + "***masked***");
+        }
+        m.appendTail(result);
+        System.out.println(result);
+
+        List<String> inputs = new ArrayList<String>();
+        inputs.add("qq[abc]");
+        inputs.add("sss[hello");
+        inputs.add("[a=1,b=2]");
+        inputs.add("[c=0]");
+        inputs.add("[Locked by thread Thread-138]");
+
+
+        //String pattern = "^\\[.*?\\]";
+        String pattern = "^.*?(\\[)(.*?)(\\])";
+        p = Pattern.compile(pattern);
+        for (String ssn : inputs) {
+            if (ssn.matches(pattern)) {
+                System.out.println("Found good loc: " + ssn);
+            }
+            m = p.matcher(ssn);
+            while (m.find()) {
+                System.out.println("Found good lock : " + m.group(2));
+            }
+        }
+
+
+    }
+
 }
