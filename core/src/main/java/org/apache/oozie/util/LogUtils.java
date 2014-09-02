@@ -27,6 +27,7 @@ import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.event.Event;
 import org.apache.oozie.client.event.JobEvent;
 import org.apache.oozie.client.event.SLAEvent;
+import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.DagXLogInfoService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.UUIDService;
@@ -36,6 +37,90 @@ import org.apache.oozie.service.XLogService;
  * logging utilities.
  */
 public class LogUtils {
+
+    private static ActionLogUtils actionLogUtils = null;
+
+    public static enum ActionLogUtils {
+        ACTION_ID {
+            @Override
+            public void setLogInfo(CoordinatorActionBean action) {
+                XLog.Info.get().setParameter(DagXLogInfoService.JOB, action.getJobId());
+                XLog.Info.get().setParameter(DagXLogInfoService.ACTION, action.getId());
+                XLog.Info.get().resetPrefix();
+            }
+            @Override
+            public void setLogInfo(WorkflowActionBean action) {
+                XLog.Info.get().setParameter(DagXLogInfoService.JOB, action.getJobId());
+                XLog.Info.get().setParameter(DagXLogInfoService.TOKEN, action.getLogToken());
+                XLog.Info.get().setParameter(DagXLogInfoService.ACTION, action.getId());
+                XLog.Info.get().resetPrefix();
+            }
+            @Override
+            public void setLogInfo(WorkflowAction action) {
+                String actionId = action.getId();
+                XLog.Info.get().setParameter(DagXLogInfoService.JOB, actionId.substring(0, actionId.indexOf("@")));
+                XLog.Info.get().setParameter(DagXLogInfoService.ACTION, actionId);
+                XLog.Info.get().resetPrefix();
+            }
+            @Override
+            public void setLogInfo(String actionId) {
+                String jobId = actionId.substring(0, actionId.indexOf("@"));
+                XLog.Info.get().setParameter(DagXLogInfoService.JOB, jobId);
+                XLog.Info.get().setParameter(DagXLogInfoService.ACTION, actionId);
+                XLog.Info.get().resetPrefix();
+            }
+        },
+        ACTION_NAME{
+            @Override
+            public void setLogInfo(CoordinatorActionBean action) {
+                String actionId = action.getId();
+                XLog.Info.get().setParameter(DagXLogInfoService.JOB, action.getJobId());
+                XLog.Info.get().setParameter(DagXLogInfoService.ACTION, actionId.substring(actionId.indexOf("@") + 1, actionId.length()));
+                XLog.Info.get().resetPrefix();
+            }
+            @Override
+            public void setLogInfo(WorkflowActionBean action) {
+                XLog.Info.get().setParameter(DagXLogInfoService.JOB, action.getJobId());
+                XLog.Info.get().setParameter(DagXLogInfoService.TOKEN, action.getLogToken());
+                XLog.Info.get().setParameter(DagXLogInfoService.ACTION, action.getName());
+                XLog.Info.get().resetPrefix();
+            }
+            @Override
+            public void setLogInfo(WorkflowAction action) {
+                String actionId = action.getId();
+                XLog.Info.get().setParameter(DagXLogInfoService.JOB, actionId.substring(0, actionId.indexOf("@")));
+                XLog.Info.get().setParameter(DagXLogInfoService.ACTION, action.getName());
+                XLog.Info.get().resetPrefix();
+            }
+            @Override
+            public void setLogInfo(String actionId) {
+                String jobId = actionId.substring(0, actionId.indexOf("@"));
+                XLog.Info.get().setParameter(DagXLogInfoService.JOB, jobId);
+                XLog.Info.get().setParameter(DagXLogInfoService.ACTION,
+                        actionId.substring(actionId.indexOf("@") + 1, actionId.length()));
+                XLog.Info.get().resetPrefix();
+            }
+        };
+
+        abstract public void setLogInfo(CoordinatorActionBean action);
+        abstract public void setLogInfo(WorkflowActionBean action);
+        abstract public void setLogInfo(WorkflowAction action);
+        abstract public void setLogInfo(String actionId);
+
+    }
+
+    private static ActionLogUtils getActionLogUtils() {
+        if (actionLogUtils == null) {
+            boolean useName = Services.get().get(ConfigurationService.class).getConf().getBoolean("oozie.service" +
+                    ".XLogStreamingService.actionname.enable", false);
+            if (useName) {
+                actionLogUtils = ActionLogUtils.ACTION_NAME;
+            } else {
+                actionLogUtils = ActionLogUtils.ACTION_ID;
+            }
+        }
+        return actionLogUtils;
+    }
 
     /**
      * Set the thread local log info with the context of the given coordinator bean.
@@ -58,9 +143,7 @@ public class LogUtils {
      * @param action action bean.
      */
     public static void setLogInfo(CoordinatorActionBean action) {
-        XLog.Info.get().setParameter(DagXLogInfoService.JOB, action.getJobId());
-        XLog.Info.get().setParameter(DagXLogInfoService.ACTION, action.getId());
-        XLog.Info.get().resetPrefix();
+        getActionLogUtils().setLogInfo(action);
     }
 
     /**
@@ -83,17 +166,11 @@ public class LogUtils {
      * @param action action bean.
      */
     public static void setLogInfo(WorkflowActionBean action) {
-        XLog.Info.get().setParameter(DagXLogInfoService.JOB, action.getJobId());
-        XLog.Info.get().setParameter(DagXLogInfoService.TOKEN, action.getLogToken());
-        XLog.Info.get().setParameter(DagXLogInfoService.ACTION, action.getId());
-        XLog.Info.get().resetPrefix();
+        getActionLogUtils().setLogInfo(action);
     }
 
     public static void setLogInfo(WorkflowAction action) {
-        String actionId = action.getId();
-        XLog.Info.get().setParameter(DagXLogInfoService.JOB, actionId.substring(0, actionId.indexOf("@")));
-        XLog.Info.get().setParameter(DagXLogInfoService.ACTION, actionId);
-        XLog.Info.get().resetPrefix();
+        getActionLogUtils().setLogInfo(action);
     }
 
     /**
@@ -102,9 +179,7 @@ public class LogUtils {
      */
     public static void setLogInfo(String id) {
         if (id.contains("@")) {
-            String jobId = id.substring(0, id.indexOf("@"));
-            XLog.Info.get().setParameter(DagXLogInfoService.JOB, jobId);
-            XLog.Info.get().setParameter(DagXLogInfoService.ACTION, id);
+            getActionLogUtils().setLogInfo(id);
         } else {
             XLog.Info.get().setParameter(DagXLogInfoService.JOB, id);
             XLog.Info.get().setParameter(DagXLogInfoService.ACTION, "");

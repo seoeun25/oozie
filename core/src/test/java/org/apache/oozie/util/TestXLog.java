@@ -18,6 +18,8 @@
 package org.apache.oozie.util;
 
 import org.apache.commons.logging.impl.SimpleLog;
+import org.apache.oozie.WorkflowActionBean;
+import org.apache.oozie.service.Services;
 import org.apache.oozie.test.XTestCase;
 
 public class TestXLog extends XTestCase {
@@ -75,6 +77,20 @@ public class TestXLog extends XTestCase {
         assertEquals("A[a] B[b]", logInfo.createPrefix());
     }
 
+    public void testInfoActions() {
+        XLog.Info.defineParameter("TOKEN");
+        XLog.Info.defineParameter("JOB");
+        XLog.Info.defineParameter("ACTION");
+
+        WorkflowActionBean bean = new WorkflowActionBean();
+        bean.setJobId("00-11-W");
+        bean.setId("00-11-W@shell");
+        bean.setName("shell");
+        LogUtils.ActionLogUtils actionLogUtils = LogUtils.ActionLogUtils.ACTION_NAME;
+        actionLogUtils.setLogInfo(bean);
+        assertEquals("TOKEN[-] JOB[00-11-W] ACTION[shell]", XLog.Info.get().getPrefix());
+    }
+
     public void testInfoConstructorPropagation() {
         XLog.Info.defineParameter("A");
         XLog.Info logInfo = new XLog.Info();
@@ -117,52 +133,60 @@ public class TestXLog extends XTestCase {
     }
 
     public void testInfoThreadLocalPrefix() throws Exception {
-        XLog.Info.defineParameter("JOB");
-        XLog.Info.defineParameter("ACTION");
+        try {
+            new Services().init();
+            //XLog.Info.defineParameter("JOB");
+            //XLog.Info.defineParameter("ACTION");
 
-        assertEquals("JOB[-] ACTION[-]", XLog.Info.get().createPrefix());
+            assertEquals("USER[-] GROUP[-] TOKEN[-] APP[-] JOB[-] ACTION[-]", XLog.Info.get().createPrefix());
 
-        String jobId = "XXX-W";
-        LogUtils.setLogInfo(jobId+"@start");
-        assertEquals("JOB[XXX-W] ACTION[XXX-W@start]", XLog.Info.get().createPrefix());
+            String jobId = "XXX-W";
+            LogUtils.setLogInfo(jobId+"@start");
+            assertEquals("USER[-] GROUP[-] TOKEN[-] APP[-] JOB[XXX-W] ACTION[XXX-W@start]", XLog.Info.get().createPrefix());
 
-        final StringBuilder sb1 = new StringBuilder();
-        final StringBuilder sb2 = new StringBuilder();
+            final StringBuilder sb1 = new StringBuilder();
+            final StringBuilder sb2 = new StringBuilder();
 
-        final LogPrinter printer = new LogPrinter();
+            final LogPrinter printer = new LogPrinter();
 
-        Thread t = new Thread() {
-            public void run() {
-                LogUtils.setLogInfo("XXX-W@hive");
-                sb1.append(printer.getLogMsgPrefix());
-                sb2.append(printer.getThreadLocalPrefix());
-            }
-        };
-        t.start();
-        t.join();
+            Thread t = new Thread() {
+                public void run() {
+                    LogUtils.setLogInfo("XXX-W@hive");
+                    sb1.append(printer.getLogMsgPrefix());
+                    sb2.append(printer.getThreadLocalPrefix());
+                }
+            };
+            t.start();
+            t.join();
 
-        assertNull(printer.getLogMsgPrefix());
-        assertEquals("JOB[XXX-W] ACTION[XXX-W@start]", printer.getThreadLocalPrefix());
-        assertEquals("JOB[XXX-W] ACTION[XXX-W@start]", printer.getLogPrefix());
+            assertNull(printer.getLogMsgPrefix());
+            assertEquals("USER[-] GROUP[-] TOKEN[-] APP[-] JOB[XXX-W] ACTION[XXX-W@start]", printer.getThreadLocalPrefix());
+            assertEquals("USER[-] GROUP[-] TOKEN[-] APP[-] JOB[XXX-W] ACTION[XXX-W@start]", printer.getLogPrefix());
 
-        assertEquals("null", sb1.toString());
-        assertEquals("JOB[XXX-W] ACTION[XXX-W@hive]", sb2.toString());
+            assertEquals("null", sb1.toString());
+            assertEquals("USER[-] GROUP[-] TOKEN[-] APP[-] JOB[XXX-W] ACTION[XXX-W@hive]", sb2.toString());
+        } finally {
+            Services.get().destroy();
+        }
     }
 
     public void testLogMsg() throws Exception {
-        XLog.Info.defineParameter("JOB");
-        XLog.Info.defineParameter("ACTION");
+        try {
+            new Services().init();
 
-        final LogPrinter printer = new LogPrinter();
-        assertNull(printer.getLogMsgPrefix());
+            final LogPrinter printer = new LogPrinter();
+            assertNull(printer.getLogMsgPrefix());
 
-        String jobId = "XXX-W";
-        LogUtils.setLogInfo(jobId+"@start");
-        assertEquals("JOB[XXX-W] ACTION[XXX-W@start]", printer.getThreadLocalPrefix());
-        assertEquals("JOB[XXX-W] ACTION[XXX-W@start]", printer.getLogPrefix());
+            String jobId = "XXX-W";
+            LogUtils.setLogInfo(jobId+"@start");
+            assertEquals("USER[-] GROUP[-] TOKEN[-] APP[-] JOB[XXX-W] ACTION[XXX-W@start]", printer.getThreadLocalPrefix());
+            assertEquals("USER[-] GROUP[-] TOKEN[-] APP[-] JOB[XXX-W] ACTION[XXX-W@start]", printer.getLogPrefix());
 
-        printer.setMsgPrefix("prefix");
-        assertEquals("prefix", printer.getLogPrefix());
+            printer.setMsgPrefix("prefix");
+            assertEquals("prefix", printer.getLogPrefix());
+        } finally {
+            Services.get().destroy();
+        }
     }
 
     public void testFactory() {

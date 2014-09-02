@@ -2192,4 +2192,12 @@
         </description>
     </property>
 
+    <property>
+        <name>oozie.service.XLogStreamingService.actionname.enable</name>
+        <value>false</value>
+        <description>
+            If true, log will contain action name at action parameter, otherwise actionId.
+        </description>
+    </property>
+
 </configuration>
