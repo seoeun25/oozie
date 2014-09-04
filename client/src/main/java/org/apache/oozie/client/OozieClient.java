@@ -1812,42 +1812,51 @@ public class OozieClient {
 
     private class GetQueueDump extends ClientCallable<List<String>> {
         GetQueueDump() {
-            super("GET", RestConstants.ADMIN, RestConstants.ADMIN_QUEUE_DUMP_RESOURCE, prepareParams());
+            super("GET", RestConstants.ADMIN, RestConstants.ADMIN_QUEUE_DUMP_RESOURCE,
+                    prepareParams(RestConstants.ALL_SERVER_REQUEST, "true"));
         }
 
         @Override
         protected List<String> call(HttpURLConnection conn) throws IOException, OozieClientException {
             if ((conn.getResponseCode() == HttpURLConnection.HTTP_OK)) {
                 Reader reader = new InputStreamReader(conn.getInputStream());
-                JSONObject json = (JSONObject) JSONValue.parse(reader);
-                JSONArray queueDumpArray = (JSONArray) json.get(JsonTags.QUEUE_DUMP);
+                JSONArray jsonArray = (JSONArray) JSONValue.parse(reader);
 
                 List<String> list = new ArrayList<String>();
-                list.add("[Server Queue Dump]:");
-                for (Object o : queueDumpArray) {
-                    JSONObject entry = (JSONObject) o;
-                    if (entry.get(JsonTags.CALLABLE_DUMP) != null) {
-                        String value = (String) entry.get(JsonTags.CALLABLE_DUMP);
-                        list.add(value);
-                    }
-                }
-                if (queueDumpArray.size() == 0) {
-                    list.add("Queue dump is null!");
-                }
+                list.add("=============================================================");
+                for (Object obj: jsonArray) {
+                    JSONObject queueInfo = (JSONObject) obj;
+                    JSONArray queueDumpArray = (JSONArray) queueInfo.get(JsonTags.QUEUE_DUMP);
 
-                list.add("******************************************");
-                list.add("[Server Uniqueness Map Dump]:");
-
-                JSONArray uniqueDumpArray = (JSONArray) json.get(JsonTags.UNIQUE_MAP_DUMP);
-                for (Object o : uniqueDumpArray) {
-                    JSONObject entry = (JSONObject) o;
-                    if (entry.get(JsonTags.UNIQUE_ENTRY_DUMP) != null) {
-                        String value = (String) entry.get(JsonTags.UNIQUE_ENTRY_DUMP);
-                        list.add(value);
+                    if (queueInfo.containsKey(JsonTags.OOZIE_HOST)) {
+                        list.add("[Server Host]: " + queueInfo.get(JsonTags.OOZIE_HOST));
                     }
-                }
-                if (uniqueDumpArray.size() == 0) {
-                    list.add("Uniqueness dump is null!");
+                    list.add("[Server Queue Dump]:");
+                    for (Object o : queueDumpArray) {
+                        JSONObject entry = (JSONObject) o;
+                        if (entry.get(JsonTags.CALLABLE_DUMP) != null) {
+                            String value = (String) entry.get(JsonTags.CALLABLE_DUMP);
+                            list.add(value);
+                        }
+                    }
+                    if (queueDumpArray.size() == 0) {
+                        list.add("Queue dump is null!");
+                    }
+
+                    list.add("******************************************");
+                    list.add("[Server Uniqueness Map Dump]:");
+
+                    JSONArray uniqueDumpArray = (JSONArray) queueInfo.get(JsonTags.UNIQUE_MAP_DUMP);
+                    for (Object o : uniqueDumpArray) {
+                        JSONObject entry = (JSONObject) o;
+                        if (entry.get(JsonTags.UNIQUE_ENTRY_DUMP) != null) {
+                            String value = (String) entry.get(JsonTags.UNIQUE_ENTRY_DUMP);
+                            list.add(value);
+                        }
+                    }
+                    if (uniqueDumpArray.size() == 0) {
+                        list.add("Uniqueness dump is null!");
+                    }
                 }
                 return list;
             }

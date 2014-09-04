@@ -20,13 +20,20 @@
 package org.apache.oozie.service;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.oozie.client.rest.JsonTags;
 import org.apache.oozie.servlet.V2AdminServlet;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.JSONStreamAware;
 
 public class DummyV2AdminServlet extends HttpServlet {
     V2AdminServlet adminServlet = null;
@@ -35,6 +42,30 @@ public class DummyV2AdminServlet extends HttpServlet {
     }
 
     public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        adminServlet.updateShareLib(request, response);
+        List<String> resources = Arrays.asList(request.getRequestURI().split("/"));
+        String resource = resources.get(resources.size()-1) ;
+
+        if (resource.equals("update_sharelib")) {
+            adminServlet.updateShareLib(request, response);
+        } else if (resource.equals("queue-dump")) {
+            JSONArray jsonArray = new JSONArray();
+            String url = request.getServletPath();
+            JSONObject queueInfo = adminServlet.getQueueDump(url, new ArrayList<String>(), new ArrayList<String>());
+            jsonArray.add(queueInfo);
+            sendJsonResponse(response, HttpServletResponse.SC_OK, jsonArray);
+        }
+    }
+
+    protected void sendJsonResponse(HttpServletResponse response, int statusCode, JSONStreamAware json)
+            throws IOException {
+        if (statusCode == HttpServletResponse.SC_OK || statusCode == HttpServletResponse.SC_CREATED) {
+            response.setStatus(statusCode);
+        }
+        else {
+            response.sendError(statusCode);
+        }
+        response.setStatus(statusCode);
+        response.setContentType("application/json; charset=\"UTF-8\"");
+        json.writeJSONString(response.getWriter());
     }
 }

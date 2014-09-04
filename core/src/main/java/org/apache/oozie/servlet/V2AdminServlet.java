@@ -19,24 +19,37 @@
 package org.apache.oozie.servlet;
 
 import java.io.IOException;
+import java.io.Reader;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.client.rest.JMSConnectionInfoBean;
 import org.apache.oozie.client.rest.JsonBean;
+import org.apache.oozie.client.rest.JsonTags;
+import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.jms.JMSConnectionInfo;
 import org.apache.oozie.jms.JMSJobEventListener;
+import org.apache.oozie.service.CallableQueueService;
 import org.apache.oozie.service.InstrumentationService;
 import org.apache.oozie.service.JMSTopicService;
 import org.apache.oozie.service.JobsConcurrencyService;
 import org.apache.oozie.service.Services;
+import org.apache.oozie.util.AuthUrlClient;
+import org.apache.oozie.util.ConfigUtils;
 import org.apache.oozie.util.Instrumentation;
 import org.apache.oozie.util.MetricsInstrumentation;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.JSONValue;
 
 /**
  * V2 admin servlet
@@ -126,5 +139,64 @@ public class V2AdminServlet extends V1AdminServlet {
             response.setStatus(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
             response.sendError(HttpServletResponse.SC_SERVICE_UNAVAILABLE, "InstrumentationService is not running");
         }
+    }
+
+    /**
+     * Get a json array of the queue info from all oozie server.
+     * The queue info contains host, queue dump and unique map dump
+     *
+     * @param jsonArray the result json array that contains a JSONObject for the queue info from all oozie server.
+     *
+     */
+    @SuppressWarnings("unchecked")
+    @Override
+    protected void getQueueDump(JSONArray jsonArray, HttpServletRequest request) throws
+            XServletException {
+        //For current server
+        List<String> queueDumpList = Services.get().get(CallableQueueService.class).getQueueDump();
+        List<String> uniqueDumpList = Services.get().get(CallableQueueService.class).getUniqueDump();
+        JSONObject queueInfo = getQueueDump(ConfigUtils.getOozieEffectiveUrl(), queueDumpList, uniqueDumpList );
+        jsonArray.add(queueInfo);
+
+        JobsConcurrencyService jc = Services.get().get(JobsConcurrencyService.class);
+        if (jc.isAllServerRequest(request.getParameterMap())) {
+            Map<String, String> servers = jc.getOtherServerUrls();
+            for (String otherUrl : servers.values()) {
+                String serverUrl = otherUrl + "/v2/admin/" + RestConstants.ADMIN_QUEUE_DUMP_RESOURCE + "?"
+                        + RestConstants.ALL_SERVER_REQUEST + "=false";
+                try {
+                    Reader reader = AuthUrlClient.callServer(serverUrl);
+                    JSONArray jsonArray1 = (JSONArray) JSONValue.parse(reader);
+                    for (Object obj: jsonArray1) {
+                        jsonArray.add(obj);
+                    }
+                }
+                catch (Exception e) {
+                    JSONObject errorInfo = getQueueDump(otherUrl, Arrays.asList(e.getMessage()), Arrays.asList(e.getMessage()));
+                    jsonArray.add(errorInfo);
+                }
+            }
+        }
+    }
+
+    public JSONObject getQueueDump(String oozieUrl, List<String> queueDumpList, List<String> uniqueDumpList) {
+        JSONObject queueInfo = new JSONObject();
+        queueInfo.put(JsonTags.OOZIE_HOST, oozieUrl);
+        JSONArray queueDumpArray = new JSONArray();
+        for (String str: queueDumpList) {
+            JSONObject jObject = new JSONObject();
+            jObject.put(JsonTags.CALLABLE_DUMP, str);
+            queueDumpArray.add(jObject);
+        }
+        queueInfo.put(JsonTags.QUEUE_DUMP, queueDumpArray);
+
+        JSONArray uniqueDumpArray = new JSONArray();
+        for (String str: uniqueDumpList) {
+            JSONObject jObject = new JSONObject();
+            jObject.put(JsonTags.UNIQUE_ENTRY_DUMP, str);
+            uniqueDumpArray.add(jObject);
+        }
+        queueInfo.put(JsonTags.UNIQUE_MAP_DUMP, uniqueDumpArray);
+        return queueInfo;
     }
 }

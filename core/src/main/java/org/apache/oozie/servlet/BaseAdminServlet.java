@@ -132,9 +132,9 @@ public abstract class BaseAdminServlet extends JsonRestServlet {
             sendJsonResponse(response, HttpServletResponse.SC_OK, json);
         }
         else if (resource.equals(RestConstants.ADMIN_QUEUE_DUMP_RESOURCE)) {
-            JSONObject json = new JSONObject();
-            getQueueDump(json);
-            sendJsonResponse(response, HttpServletResponse.SC_OK, json);
+            JSONArray jsonArray = new JSONArray();
+            getQueueDump(jsonArray, request);
+            sendJsonResponse(response, HttpServletResponse.SC_OK, jsonArray);
         }
         else if (resource.equals(RestConstants.ADMIN_TIME_ZONES_RESOURCE)) {
             JSONObject json = new JSONObject();
@@ -348,7 +348,7 @@ public abstract class BaseAdminServlet extends JsonRestServlet {
     protected abstract void setOozieMode(HttpServletRequest request, HttpServletResponse response, String resourceName)
             throws XServletException;
 
-    protected abstract void getQueueDump(JSONObject json) throws XServletException;
+    protected abstract void getQueueDump(JSONArray jsonArray, HttpServletRequest request) throws XServletException;
 
     private static final JSONArray GMTOffsetTimeZones = new JSONArray();
     static {

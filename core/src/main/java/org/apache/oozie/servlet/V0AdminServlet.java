@@ -32,6 +32,7 @@ import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.client.rest.JsonTags;
 import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.service.Services;
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 @SuppressWarnings("unchecked")
@@ -103,15 +104,8 @@ public class V0AdminServlet extends BaseAdminServlet {
         }
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see
-     * org.apache.oozie.servlet.BaseAdminServlet#getQueueDump(org.json.simple
-     * .JSONObject)
-     */
     @Override
-    protected void getQueueDump(JSONObject json) throws XServletException {
+    protected void getQueueDump(JSONArray json, HttpServletRequest request) throws XServletException {
         throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0301, "cannot get queue dump");
     }
 

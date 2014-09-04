@@ -21,9 +21,12 @@ package org.apache.oozie.servlet;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Callable;
 
 import javax.servlet.http.HttpServletResponse;
@@ -234,14 +237,17 @@ public class TestV1AdminServlet extends DagServletTestCase {
                 conn.setRequestMethod("GET");
                 assertEquals(HttpServletResponse.SC_OK, conn.getResponseCode());
                 assertTrue(conn.getHeaderField("content-type").startsWith(RestConstants.JSON_CONTENT_TYPE));
-                JSONObject json = (JSONObject) JSONValue.parse(new InputStreamReader(conn.getInputStream()));
-                assertTrue(json.containsKey(JsonTags.QUEUE_DUMP));
+                JSONArray json = (JSONArray) JSONValue.parse(new InputStreamReader(conn.getInputStream()));
+                assertEquals(1, json.size());
+                JSONObject queueInfo = (JSONObject) json.get(0);
+                assertTrue(queueInfo.containsKey(JsonTags.QUEUE_DUMP));
+                assertFalse(queueInfo.containsKey(JsonTags.OOZIE_HOST));
                 return null;
             }
         });
 
     }
-    
+
     public void testAvailableTimeZones() throws Exception {
         runTest("/v1/admin/*", V1AdminServlet.class, IS_SECURITY_ENABLED, new Callable<Void>() {
             public Void call() throws Exception {

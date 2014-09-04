@@ -30,6 +30,7 @@ public interface JsonTags {
     public static final String CALLABLE_DUMP = "callableDump";
     public static final String UNIQUE_MAP_DUMP = "uniqueMapDump";
     public static final String UNIQUE_ENTRY_DUMP = "uniqueEntryDump";
+    public static final String OOZIE_HOST = "host";
 
     public static final String SHARELIB_LIB_UPDATE = "sharelibUpdate";
     public static final String SHARELIB_LIB = "sharelib";

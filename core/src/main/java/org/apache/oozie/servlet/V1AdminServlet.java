@@ -23,22 +23,16 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.client.OozieClient.SYSTEM_MODE;
-import org.apache.oozie.client.rest.JMSConnectionInfoBean;
 import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.client.rest.JsonTags;
 import org.apache.oozie.client.rest.RestConstants;
-import org.apache.oozie.jms.JMSConnectionInfo;
-import org.apache.oozie.jms.JMSJobEventListener;
 import org.apache.oozie.service.CallableQueueService;
-import org.apache.oozie.service.JMSTopicService;
 import org.apache.oozie.service.Services;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -128,15 +122,15 @@ public class V1AdminServlet extends BaseAdminServlet {
     /**
      * Get a json array of queue dump and a json array of unique map dump
      *
-     * @param JSONObject the result json object that contains a JSONArray for the callable dump
+     * @param jsonArray the result json array that contains a JSONObject for the callable dump and unique map
      *
      * @see
-     * org.apache.oozie.servlet.BaseAdminServlet#getQueueDump(org.json.simple
-     * .JSONObject)
+     * org.apache.oozie.servlet.BaseAdminServlet#getQueueDump(org.json.simple.JSONArray, javax.servlet.http.HttpServletRequest)
      */
     @SuppressWarnings("unchecked")
     @Override
-    protected void getQueueDump(JSONObject json) throws XServletException {
+    protected void getQueueDump(JSONArray jsonArray, HttpServletRequest request) throws XServletException {
+        JSONObject queueInfo = new JSONObject();
         List<String> queueDumpList = Services.get().get(CallableQueueService.class).getQueueDump();
         JSONArray queueDumpArray = new JSONArray();
         for (String str: queueDumpList) {
@@ -144,7 +138,7 @@ public class V1AdminServlet extends BaseAdminServlet {
             jObject.put(JsonTags.CALLABLE_DUMP, str);
             queueDumpArray.add(jObject);
         }
-        json.put(JsonTags.QUEUE_DUMP, queueDumpArray);
+        queueInfo.put(JsonTags.QUEUE_DUMP, queueDumpArray);
 
         List<String> uniqueDumpList = Services.get().get(CallableQueueService.class).getUniqueDump();
         JSONArray uniqueDumpArray = new JSONArray();
@@ -153,7 +147,8 @@ public class V1AdminServlet extends BaseAdminServlet {
             jObject.put(JsonTags.UNIQUE_ENTRY_DUMP, str);
             uniqueDumpArray.add(jObject);
         }
-        json.put(JsonTags.UNIQUE_MAP_DUMP, uniqueDumpArray);
+        queueInfo.put(JsonTags.UNIQUE_MAP_DUMP, uniqueDumpArray);
+        jsonArray.add(queueInfo);
     }
 
     @Override
