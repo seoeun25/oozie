@@ -35,6 +35,7 @@ import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.action.ActionExecutorException;
 import org.apache.oozie.action.hadoop.ActionExecutorTestCase;
+import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.WorkflowAppService;
 import org.apache.oozie.util.XConfiguration;
@@ -60,7 +61,7 @@ public class TestEmailActionExecutor extends ActionExecutorTestCase {
     private Context createNormalContext(String actionXml) throws Exception {
         EmailActionExecutor ae = new EmailActionExecutor();
 
-        Services.get().getConf().setInt("oozie.email.smtp.port", server.getSmtp().getPort());
+        ConfigurationService.setInt("oozie.email.smtp.port", server.getSmtp().getPort());
         // Use default host 'localhost'. Hence, do not set the smtp host.
         // Services.get().getConf().set("oozie.email.smtp.host", "localhost");
         // Use default from address, 'oozie@localhost'.
@@ -68,9 +69,9 @@ public class TestEmailActionExecutor extends ActionExecutorTestCase {
         // Services.get().getConf().set("oozie.email.from.address", "oozie@localhost");
 
         // Disable auth tests by default.
-        Services.get().getConf().setBoolean("oozie.email.smtp.auth", false);
-        Services.get().getConf().set("oozie.email.smtp.username", "");
-        Services.get().getConf().set("oozie.email.smtp.password", "");
+        ConfigurationService.setBoolean("oozie.email.smtp.auth", false);
+        ConfigurationService.set("oozie.email.smtp.username", "");
+        ConfigurationService.set("oozie.email.smtp.password", "");
 
         XConfiguration protoConf = new XConfiguration();
         protoConf.set(WorkflowAppService.HADOOP_USER, getTestUser());
@@ -88,9 +89,9 @@ public class TestEmailActionExecutor extends ActionExecutorTestCase {
         Context ctx = createNormalContext(actionXml);
 
         // Override and enable auth.
-        Services.get().getConf().setBoolean("oozie.email.smtp.auth", true);
-        Services.get().getConf().set("oozie.email.smtp.username", "oozie@localhost");
-        Services.get().getConf().set("oozie.email.smtp.password", "oozie");
+        ConfigurationService.setBoolean("oozie.email.smtp.auth", true);
+        ConfigurationService.set("oozie.email.smtp.username", "oozie@localhost");
+        ConfigurationService.set("oozie.email.smtp.password", "oozie");
         return ctx;
     }
 

@@ -119,7 +119,7 @@ public class TestEventGeneration extends XDataTestCase {
     protected void setUp() throws Exception {
         super.setUp();
         services = new Services();
-        Configuration conf = services.getConf();
+        Configuration conf = getOozieConfiguration(services);
         conf.set(Services.CONF_SERVICE_EXT_CLASSES, "org.apache.oozie.service.EventHandlerService");
         services.init();
         ehs = services.get(EventHandlerService.class);

@@ -162,8 +162,8 @@ public class TestOozieSharelibCLI extends XTestCase {
     private Services getServices() throws ServiceException {
         if (services == null) {
             services = new Services();
-            services.getConf()
-                    .set(Services.CONF_SERVICE_CLASSES,"org.apache.oozie.service.LiteWorkflowAppService,"
+            Configuration conf = getOozieConfiguration(services);
+            conf.set(Services.CONF_SERVICE_CLASSES,"org.apache.oozie.service.LiteWorkflowAppService,"
                             + "org.apache.oozie.service.SchedulerService,"
                             + "org.apache.oozie.service.HadoopAccessorService,"
                             + "org.apache.oozie.service.ShareLibService");

@@ -360,7 +360,8 @@ public class TestActionCheckXCommand extends XDataTestCase {
         setSystemProperty("oozie.action.retries.max", Integer.toString(maxRetries));
         services = new Services();
         // Disable ActionCheckerService so it doesn't interfere by triggering any extra ActionCheckXCommands
-        setClassesToBeExcluded(services.getConf(), new String[]{"org.apache.oozie.service.ActionCheckerService"});
+        setClassesToBeExcluded(getOozieConfiguration(services), new String[]{"org.apache.oozie.service" +
+                ".ActionCheckerService"});
         services.init();
 
         final JPAService jpaService = Services.get().get(JPAService.class);
@@ -472,7 +473,8 @@ public class TestActionCheckXCommand extends XDataTestCase {
         setSystemProperty("oozie.action.retries.max", Integer.toString(maxRetries));
         services = new Services();
         // Disable ActionCheckerService so it doesn't interfere by triggering any extra ActionCheckXCommands
-        setClassesToBeExcluded(services.getConf(), new String[]{"org.apache.oozie.service.ActionCheckerService"});
+        setClassesToBeExcluded(getOozieConfiguration(services), new String[]{"org.apache.oozie.service" +
+                ".ActionCheckerService"});
         services.init();
 
         final JPAService jpaService = Services.get().get(JPAService.class);

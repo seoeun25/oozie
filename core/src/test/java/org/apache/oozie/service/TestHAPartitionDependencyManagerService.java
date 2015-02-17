@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.util.Shell;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.client.CoordinatorAction.Status;
@@ -46,10 +47,11 @@ public class TestHAPartitionDependencyManagerService extends ZKXTestCase {
     protected void setUp() throws Exception {
         super.setUp();
         services = super.setupServicesForHCatalog(Services.get());
+        Configuration conf = getOozieConfiguration(services);
         // disable recovery service
-        services.getConf().setInt(RecoveryService.CONF_SERVICE_INTERVAL, 1000000);
+        conf.setInt(RecoveryService.CONF_SERVICE_INTERVAL, 1000000);
         // disable regular cache purge
-        services.getConf().setInt(PartitionDependencyManagerService.CACHE_PURGE_INTERVAL, 1000000);
+        conf.setInt(PartitionDependencyManagerService.CACHE_PURGE_INTERVAL, 1000000);
         server = super.getHCatalogServer().getMetastoreAuthority();
         services.init();
     }
@@ -231,7 +233,7 @@ public class TestHAPartitionDependencyManagerService extends ZKXTestCase {
         BatchQueryExecutor.getInstance().executeBatchInsertUpdateDelete(insertList, null, null);
 
         // run cache purge
-        Services.get().getConf().setInt(PartitionDependencyManagerService.CACHE_PURGE_TTL, 0);
+        ConfigurationService.setInt(PartitionDependencyManagerService.CACHE_PURGE_TTL, 0);
         pdms.runCachePurgeWorker();
 
         // only coord Action 1 still in dependency cache

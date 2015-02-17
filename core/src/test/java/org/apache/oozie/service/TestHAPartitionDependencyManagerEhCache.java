@@ -18,13 +18,15 @@
 
 package org.apache.oozie.service;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.dependency.hcat.EhcacheHCatDependencyCache;
 
 public class TestHAPartitionDependencyManagerEhCache extends TestHAPartitionDependencyManagerService {
 
     protected void setUp() throws Exception {
         super.setUp();
-        services.getConf().set(PartitionDependencyManagerService.CACHE_MANAGER_IMPL,
+        Configuration conf = getOozieConfiguration(services);
+        conf.set(PartitionDependencyManagerService.CACHE_MANAGER_IMPL,
                 EhcacheHCatDependencyCache.class.getName());
         services.setService(ZKJobsConcurrencyService.class);
         PartitionDependencyManagerService pdms = services.get(PartitionDependencyManagerService.class);

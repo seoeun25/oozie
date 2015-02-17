@@ -25,6 +25,7 @@ import java.io.Reader;
 import java.io.Writer;
 import java.util.Properties;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.log4j.Appender;
@@ -51,7 +52,8 @@ public class TestSignalXCommand extends XDataTestCase {
     protected void setUp() throws Exception {
         super.setUp();
         services = new Services();
-        services.getConf().setBoolean(LiteWorkflowAppParser.VALIDATE_FORK_JOIN, false);
+        Configuration conf = getOozieConfiguration(services);
+        conf.setBoolean(LiteWorkflowAppParser.VALIDATE_FORK_JOIN, false);
         services.init();
 
     }

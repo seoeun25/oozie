@@ -18,6 +18,7 @@
 
 package org.apache.oozie.action.hadoop;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapred.JobConf;
@@ -34,7 +35,8 @@ public class TestHCatPrepareActions extends XHCatTestCase {
     protected void setUp() throws Exception {
         super.setUp();
         Services services = new Services();
-        services.getConf().set(URIHandlerService.URI_HANDLERS,
+        Configuration conf = getOozieConfiguration(services);
+        conf.set(URIHandlerService.URI_HANDLERS,
                 FSURIHandler.class.getName() + "," + HCatURIHandler.class.getName());
         services.init();
     }
