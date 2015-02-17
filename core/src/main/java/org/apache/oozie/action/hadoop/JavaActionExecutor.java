@@ -1667,7 +1667,7 @@ public class JavaActionExecutor extends ActionExecutor {
                 XConfiguration jobConf = getWorkflowConf(context);
                 names = jobConf.getStrings(ACTION_SHARELIB_FOR + getType());
                 if (names == null || names.length == 0) {
-                    names = Services.get().getConf().getStrings(ACTION_SHARELIB_FOR + getType());
+                    names = ConfigurationService.getStrings(ACTION_SHARELIB_FOR + getType());
                     if (names == null || names.length == 0) {
                         String name = getDefaultShareLibName(actionXml);
                         if (name != null) {

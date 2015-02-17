@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.client.CoordinatorAction.Status;
 import org.apache.oozie.client.rest.JsonBean;
@@ -50,7 +51,8 @@ public class TestPartitionDependencyManagerService extends XDataTestCase {
         super.setUp();
         services = super.setupServicesForHCatalog();
         // disable regular cache purge
-        services.getConf().setInt(PartitionDependencyManagerService.CACHE_PURGE_INTERVAL, 1000000);
+        Configuration conf = getOozieConfiguration(services);
+        conf.setInt(PartitionDependencyManagerService.CACHE_PURGE_INTERVAL, 1000000);
         services.init();
     }
 

@@ -18,6 +18,7 @@
 
 package org.apache.oozie.service;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.test.XTestCase;
 import org.apache.oozie.util.Instrumentation;
 import org.apache.oozie.util.MetricsInstrumentation;
@@ -28,7 +29,9 @@ public class TestMetricsInstrumentationService extends XTestCase {
     protected void setUp() throws Exception {
         super.setUp();
         Services services = new Services();
-        services.getConf().set(Services.CONF_SERVICE_EXT_CLASSES, "org.apache.oozie.service.MetricsInstrumentationService");
+        Configuration conf = getOozieConfiguration(services);
+        conf.set(Services.CONF_SERVICE_EXT_CLASSES,
+                "org.apache.oozie.service.MetricsInstrumentationService");
         services.init();
     }
 

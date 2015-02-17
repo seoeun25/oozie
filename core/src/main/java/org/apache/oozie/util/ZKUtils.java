@@ -193,7 +193,7 @@ public class ZKUtils {
         int zkSessionTimeout = ConfigurationService.getInt(ZK_SESSION_TIMEOUT, 300);
 
         ACLProvider aclProvider;
-        if (Services.get().getConf().getBoolean(ZK_SECURE, false)) {
+        if (ConfigurationService.getBoolean(ZK_SECURE)) {
             log.info("Connecting to ZooKeeper with SASL/Kerberos and using 'sasl' ACLs");
             setJaasConfiguration();
             System.setProperty(ZooKeeperSaslClient.LOGIN_CONTEXT_NAME_KEY, "Client");
@@ -323,7 +323,7 @@ public class ZKUtils {
     }
 
     private void checkAndSetACLs() throws Exception {
-        if (Services.get().getConf().getBoolean(ZK_SECURE, false)) {
+        if (ConfigurationService.getBoolean(ZK_SECURE)) {
             // If znodes were previously created without security enabled, and now it is, we need to go through all existing znodes
             // and set the ACLs for them
             // We can't get the namespace znode through curator; have to go through zk client
@@ -352,11 +352,11 @@ public class ZKUtils {
 
     // This gets ignored during most tests, see ZKXTestCaseWithSecurity#setupZKServer()
     private void setJaasConfiguration() throws ServiceException, IOException {
-        String keytabFile = Services.get().getConf().get(KERBEROS_KEYTAB, System.getProperty("user.home") + "/oozie.keytab").trim();
+        String keytabFile = ConfigurationService.get(KERBEROS_KEYTAB).trim();
         if (keytabFile.length() == 0) {
             throw new ServiceException(ErrorCode.E0026, KERBEROS_KEYTAB);
         }
-        String principal = Services.get().getConf().get(KERBEROS_PRINCIPAL, "oozie/localhost@LOCALHOST");
+        String principal = ConfigurationService.get(KERBEROS_PRINCIPAL);
         if (principal.length() == 0) {
             throw new ServiceException(ErrorCode.E0026, KERBEROS_PRINCIPAL);
         }
@@ -368,7 +368,7 @@ public class ZKUtils {
     }
 
     private String getServicePrincipal() throws ServiceException {
-        String principal = Services.get().getConf().get(KERBEROS_PRINCIPAL, "oozie/localhost@LOCALHOST");
+        String principal = ConfigurationService.get(KERBEROS_PRINCIPAL);
         if (principal.length() == 0) {
             throw new ServiceException(ErrorCode.E0026, KERBEROS_PRINCIPAL);
         }

@@ -95,7 +95,7 @@ public class SLACalculatorMemory implements SLACalculator {
         // schedule runnable by default 1 hours
         Services.get()
                 .get(SchedulerService.class)
-                .schedule(purgeThread, 3600, Services.get().getConf().getInt(SLAService.CONF_SLA_HISTORY_PURGE_INTERVAL, 3600),
+                .schedule(purgeThread, 3600, ConfigurationService.getInt(SLAService.CONF_SLA_HISTORY_PURGE_INTERVAL),
                         SchedulerService.Unit.SEC);
     }
 

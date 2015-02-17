@@ -18,6 +18,7 @@
 
 package org.apache.oozie.action.hadoop;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapred.JobConf;
@@ -34,7 +35,8 @@ public class TestFSPrepareActions extends XFsTestCase {
     protected void setUp() throws Exception {
         super.setUp();
         Services services = new Services();
-        services.getConf().set(HadoopAccessorService.SUPPORTED_FILESYSTEMS, "hdfs");
+        Configuration conf = getOozieConfiguration(services);
+        conf.set(HadoopAccessorService.SUPPORTED_FILESYSTEMS, "hdfs");
         services.init();
     }
 

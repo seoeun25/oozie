@@ -190,7 +190,7 @@ public class TestCoordinatorEngineStreamLog extends XDataTestCase {
         assertEquals(list.get(5).getLastModifiedTime().toString(), service.endTime.toString());
 
         // Test 11, testing -scope option with Max Count
-        Services.get().getConf().setInt(CoordinatorEngine.COORD_ACTIONS_LOG_MAX_COUNT, 1);
+        ConfigurationService.setInt(CoordinatorEngine.COORD_ACTIONS_LOG_MAX_COUNT, 1);
         ce = createCoordinatorEngine();
         try {
             ce.streamLog(jobId, "1-3", RestConstants.JOB_LOG_ACTION, new StringWriter(), new HashMap<String, String[]>());

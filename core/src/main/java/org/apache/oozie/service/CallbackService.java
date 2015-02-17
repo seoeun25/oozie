@@ -38,7 +38,6 @@ public class CallbackService implements Service {
 
     public static final String CONF_EARLY_REQUEUE_MAX_RETRIES = CONF_PREFIX + "early.requeue.max.retries";
 
-    private Configuration oozieConf;
     private int earlyRequeueMaxRetries;
 
     /**
@@ -47,7 +46,6 @@ public class CallbackService implements Service {
      * @param services services instance.
      */
     public void init(Services services) {
-        oozieConf = services.getConf();
         earlyRequeueMaxRetries = ConfigurationService.getInt(CONF_EARLY_REQUEUE_MAX_RETRIES);
     }
 
@@ -81,7 +79,7 @@ public class CallbackService implements Service {
         ParamChecker.notEmpty(actionId, "actionId");
         ParamChecker.notEmpty(externalStatusVar, "externalStatusVar");
         //TODO: figure out why double encoding is happening in case of hadoop callbacks.
-        String baseCallbackUrl = ConfigurationService.get(oozieConf, CONF_BASE_URL);
+        String baseCallbackUrl = ConfigurationService.get(CONF_BASE_URL);
         return MessageFormat.format(CALL_BACK_QUERY_STRING, baseCallbackUrl, actionId, externalStatusVar);
     }
 
