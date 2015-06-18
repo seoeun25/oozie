@@ -932,24 +932,6 @@ public class OozieClient {
         new JobAction(jobId, RestConstants.JOB_ACTION_CHANGE, changeValue).call();
     }
 
-    public String getActionLog(String actionId, PrintStream ps) throws OozieClientException {
-        return new ActionLog(actionId, ps).call();
-    }
-
-    private class ActionLog extends ActionMetadata {
-        ActionLog(String actionId, PrintStream ps) {
-            super(actionId, RestConstants.ACTION_SHOW_LOG, ps);
-        }
-    }
-
-    public String getLog(String id) throws OozieClientException {
-        return getLog(id, null);
-    }
-
-    public String getLog(String id, PrintStream ps) throws OozieClientException {
-        return id.contains("@") ? getActionLog(id, ps) : getJobLog(id, null, null, ps);
-    }
-
     /**
      * Ignore a coordinator job.
      *
@@ -1198,13 +1180,12 @@ public class OozieClient {
         }
     }
 
-    private class JobMetadata extends Metadata {
+    private class JobMetadata extends ClientCallable<String> {
         PrintStream printStream;
 
         JobMetadata(String jobId, String metaType) {
-            super(RestConstants.JOB, notEmpty(jobId, "jobId"), prepareParams(RestConstants.JOB_SHOW_PARAM,
+            super("GET", RestConstants.JOB, notEmpty(jobId, "jobId"), prepareParams(RestConstants.JOB_SHOW_PARAM,
                     metaType));
-
         }
 
         JobMetadata(String jobId, String metaType, PrintStream ps) {
@@ -1214,24 +1195,11 @@ public class OozieClient {
         }
 
         JobMetadata(String jobId, String logRetrievalType, String logRetrievalScope, String metaType, String logFilter,
-                    PrintStream ps) {
+                PrintStream ps) {
             super("GET", RestConstants.JOB, notEmpty(jobId, "jobId"), prepareParams(RestConstants.JOB_SHOW_PARAM,
                     metaType, RestConstants.JOB_LOG_TYPE_PARAM, logRetrievalType, RestConstants.JOB_LOG_SCOPE_PARAM,
                     logRetrievalScope, RestConstants.LOG_FILTER_OPTION, logFilter));
             printStream = ps;
-        }
-    }
-
-    private class Metadata extends ClientCallable<String> {
-        PrintStream printStream;
-
-        Metadata(String collection, String resource, Map<String,String> params) {
-            super("GET", collection, resource, params);
-        }
-
-        Metadata(String collection, String resource, Map<String,String> params, PrintStream ps) {
-            super("GET", collection, resource, params);
-            this.printStream = ps;
         }
 
         @Override

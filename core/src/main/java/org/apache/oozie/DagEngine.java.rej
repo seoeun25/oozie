@@ -1,0 +1,56 @@
+***************
+*** 17,22 ****
+   */
+  package org.apache.oozie;
+  
+  import org.apache.oozie.util.XLogStreamer;
+  import org.apache.oozie.service.XLogService;
+  import org.apache.oozie.service.DagXLogInfoService;
+--- 17,23 ----
+   */
+  package org.apache.oozie;
+  
++ import org.apache.oozie.service.UUIDService;
+  import org.apache.oozie.util.XLogStreamer;
+  import org.apache.oozie.service.XLogService;
+  import org.apache.oozie.service.DagXLogInfoService;
+***************
+*** 393,407 ****
+      /**
+       * Stream the log of a job.
+       *
+-      * @param jobId job Id.
+       * @param writer writer to stream the log to.
+       * @param params additional parameters from the request
+       * @throws IOException thrown if the log cannot be streamed.
+       * @throws DagEngineException thrown if there is error in getting the Workflow Information for jobId.
+       */
+      @Override
+-     public void streamLog(String jobId, Writer writer, Map<String, String[]> params) throws IOException, DagEngineException {
+          XLogStreamer.Filter filter = new XLogStreamer.Filter();
+          filter.setParameter(DagXLogInfoService.JOB, jobId);
+          WorkflowJob job = getJob(jobId);
+          Date lastTime = job.getEndTime();
+--- 394,415 ----
+      /**
+       * Stream the log of a job.
+       *
++      * @param id  jobId or actionId.
+       * @param writer writer to stream the log to.
+       * @param params additional parameters from the request
+       * @throws IOException thrown if the log cannot be streamed.
+       * @throws DagEngineException thrown if there is error in getting the Workflow Information for jobId.
+       */
+      @Override
++     public void streamLog(String id, Writer writer, Map<String, String[]> params) throws IOException, DagEngineException {
+          XLogStreamer.Filter filter = new XLogStreamer.Filter();
++         String jobId;
++         if (id.contains("@")) {
++             jobId = Services.get().get(UUIDService.class).getId(id);
++             filter.setParameter(DagXLogInfoService.ACTION, id);
++         } else {
++             jobId = id;
++         }
+          filter.setParameter(DagXLogInfoService.JOB, jobId);
+          WorkflowJob job = getJob(jobId);
+          Date lastTime = job.getEndTime();
