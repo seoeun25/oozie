@@ -1,0 +1,330 @@
+diff --git client/src/main/java/org/apache/oozie/cli/OozieCLI.java client/src/main/java/org/apache/oozie/cli/OozieCLI.java
+index d964889..1fb99ca 100644
+--- client/src/main/java/org/apache/oozie/cli/OozieCLI.java
++++ client/src/main/java/org/apache/oozie/cli/OozieCLI.java
+@@ -1076,7 +1076,7 @@ public class OozieCLI {
+                 }
+                 else {
+                     if (!options.contains(ACTION_OPTION) && !options.contains(DATE_OPTION)) {
+-                        wc.getJobLog(commandLine.getOptionValue(LOG_OPTION), null, null, ps);
++                        wc.getLog(commandLine.getOptionValue(LOG_OPTION), ps);
+                     }
+                     else {
+                         throw new OozieCLIException("Invalid options provided for log retrieval. " + ACTION_OPTION
+diff --git client/src/main/java/org/apache/oozie/client/OozieClient.java client/src/main/java/org/apache/oozie/client/OozieClient.java
+index 129579a..c397b3b 100644
+--- client/src/main/java/org/apache/oozie/client/OozieClient.java
++++ client/src/main/java/org/apache/oozie/client/OozieClient.java
+@@ -911,11 +911,12 @@ public class OozieClient {
+      * @param logRetrievalType Based on which filter criteria the log is retrieved
+      * @param logRetrievalScope Value for the retrieval type
+      * @param ps Printstream of command line interface
++     * @return the job log if the ps is null
+      * @throws OozieClientException thrown if the job info could not be retrieved.
+      */
+-    public void getJobLog(String jobId, String logRetrievalType, String logRetrievalScope, PrintStream ps)
++    public String getJobLog(String jobId, String logRetrievalType, String logRetrievalScope, PrintStream ps)
+             throws OozieClientException {
+-        new JobLog(jobId, logRetrievalType, logRetrievalScope, ps).call();
++        return new JobLog(jobId, logRetrievalType, logRetrievalScope, ps).call();
+     }
+ 
+     private class JobLog extends JobMetadata {
+@@ -928,6 +929,24 @@ public class OozieClient {
+         }
+     }
+ 
++    public String getActionLog(String actionId, PrintStream ps) throws OozieClientException {
++        return new ActionLog(actionId, ps).call();
++    }
++
++    private class ActionLog extends ActionMetadata {
++        ActionLog(String actionId, PrintStream ps) {
++            super(actionId, RestConstants.ACTION_SHOW_LOG, ps);
++        }
++    }
++
++    public String getLog(String id) throws OozieClientException {
++        return getLog(id, null);
++    }
++
++    public String getLog(String id, PrintStream ps) throws OozieClientException {
++        return id.contains("@") ? getActionLog(id, ps) : getJobLog(id, null, null, ps);
++    }
++
+     /**
+      * Gets the JMS topic name for a particular job
+      * @param jobId given jobId
+@@ -976,18 +995,38 @@ public class OozieClient {
+         }
+     }
+ 
+-    private class JobMetadata extends ClientCallable<String> {
+-        PrintStream printStream;
++    private class JobMetadata extends Metadata {
+ 
+         JobMetadata(String jobId, String metaType) {
+-            super("GET", RestConstants.JOB, notEmpty(jobId, "jobId"), prepareParams(RestConstants.JOB_SHOW_PARAM,
++            super(RestConstants.JOB, notEmpty(jobId, "jobId"), prepareParams(RestConstants.JOB_SHOW_PARAM,
+                     metaType));
+         }
+ 
+         JobMetadata(String jobId, String logRetrievalType, String logRetrievalScope, String metaType, PrintStream ps) {
+-            super("GET", RestConstants.JOB, notEmpty(jobId, "jobId"), prepareParams(RestConstants.JOB_SHOW_PARAM,
++            super(RestConstants.JOB, notEmpty(jobId, "jobId"), prepareParams(RestConstants.JOB_SHOW_PARAM,
+                     metaType, RestConstants.JOB_LOG_TYPE_PARAM, logRetrievalType, RestConstants.JOB_LOG_SCOPE_PARAM,
+-                    logRetrievalScope));
++                    logRetrievalScope), ps);
++        }
++
++    }
++
++    private class ActionMetadata extends Metadata {
++
++        ActionMetadata(String actionId, String metaType, PrintStream ps) {
++            super(RestConstants.ACTION, notEmpty(actionId, "actionId"), prepareParams(RestConstants.ACTION_PARAM,
++                    metaType), ps);
++        }
++    }
++
++    private class Metadata extends ClientCallable<String> {
++        PrintStream printStream;
++
++        Metadata(String collection, String resource, Map<String,String> params){
++            super("GET", collection, resource, params);
++        }
++
++        Metadata(String collection, String resource, Map<String,String> params, PrintStream ps){
++            super("GET", collection, resource, params);
+             printStream = ps;
+         }
+ 
+@@ -1020,7 +1059,6 @@ public class OozieClient {
+          *
+          * @param reader reader to read into a string.
+          * @param maxLen max content length allowed, if -1 there is no limit.
+-         * @param ps Printstream of command line interface
+          * @throws IOException
+          */
+         private void sendToOutputStream(Reader reader, int maxLen) throws IOException {
+diff --git client/src/main/java/org/apache/oozie/client/rest/RestConstants.java client/src/main/java/org/apache/oozie/client/rest/RestConstants.java
+index b0dd6cb..0ec8eb1 100644
+--- client/src/main/java/org/apache/oozie/client/rest/RestConstants.java
++++ client/src/main/java/org/apache/oozie/client/rest/RestConstants.java
+@@ -30,6 +30,8 @@ public interface RestConstants {
+ 
+     public static final String ADMIN = "admin";
+ 
++    public static final String ACTION = "action";
++
+     public static final String JSON_CONTENT_TYPE = "application/json";
+ 
+     public static final String XML_CONTENT_TYPE = "application/xml";
+@@ -174,4 +176,6 @@ public interface RestConstants {
+ 
+     public static final String ALL_WORKFLOWS_FOR_COORD_ACTION = "allruns";
+ 
++    public static final String ACTION_SHOW_LOG = "log";
++
+ }
+diff --git core/src/main/java/org/apache/oozie/DagEngine.java core/src/main/java/org/apache/oozie/DagEngine.java
+index cad5ddd..264de5c 100644
+--- core/src/main/java/org/apache/oozie/DagEngine.java
++++ core/src/main/java/org/apache/oozie/DagEngine.java
+@@ -17,6 +17,7 @@
+  */
+ package org.apache.oozie;
+ 
++import org.apache.oozie.service.UUIDService;
+ import org.apache.oozie.util.XLogStreamer;
+ import org.apache.oozie.service.XLogService;
+ import org.apache.oozie.service.DagXLogInfoService;
+@@ -393,15 +394,22 @@ public class DagEngine extends BaseEngine {
+     /**
+      * Stream the log of a job.
+      *
+-     * @param jobId job Id.
++     * @param id  jobId or actionId.
+      * @param writer writer to stream the log to.
+      * @param params additional parameters from the request
+      * @throws IOException thrown if the log cannot be streamed.
+      * @throws DagEngineException thrown if there is error in getting the Workflow Information for jobId.
+      */
+     @Override
+-    public void streamLog(String jobId, Writer writer, Map<String, String[]> params) throws IOException, DagEngineException {
++    public void streamLog(String id, Writer writer, Map<String, String[]> params) throws IOException, DagEngineException {
+         XLogStreamer.Filter filter = new XLogStreamer.Filter();
++        String jobId;
++        if (id.contains("@")) {
++            jobId = Services.get().get(UUIDService.class).getId(id);
++            filter.setParameter(DagXLogInfoService.ACTION, id);
++        } else {
++            jobId = id;
++        }
+         filter.setParameter(DagXLogInfoService.JOB, jobId);
+         WorkflowJob job = getJob(jobId);
+         Date lastTime = job.getEndTime();
+diff --git core/src/main/java/org/apache/oozie/servlet/ActionServlet.java core/src/main/java/org/apache/oozie/servlet/ActionServlet.java
+new file mode 100644
+index 0000000..0a9637e
+--- /dev/null
++++ core/src/main/java/org/apache/oozie/servlet/ActionServlet.java
+@@ -0,0 +1,54 @@
++package org.apache.oozie.servlet;
++
++import org.apache.oozie.DagEngine;
++import org.apache.oozie.DagEngineException;
++import org.apache.oozie.ErrorCode;
++import org.apache.oozie.client.rest.RestConstants;
++import org.apache.oozie.service.DagEngineService;
++import org.apache.oozie.service.Services;
++
++import javax.servlet.ServletException;
++import javax.servlet.http.HttpServletRequest;
++import javax.servlet.http.HttpServletResponse;
++import java.io.IOException;
++import java.util.Arrays;
++
++public class ActionServlet extends JsonRestServlet {
++
++    private static final String INSTRUMENTATION_NAME = "action";
++
++    private static final ResourceInfo[] RESOURCES_INFO = new ResourceInfo[1];
++
++    static {
++        RESOURCES_INFO[0] = new ResourceInfo("*", Arrays.asList("GET"), Arrays.asList(
++                new ParameterInfo(RestConstants.ACTION_PARAM, String.class, true, Arrays.asList("GET"))));
++    }
++
++    public ActionServlet() {
++        super(INSTRUMENTATION_NAME, RESOURCES_INFO);
++    }
++
++    @Override
++    @SuppressWarnings("unchecked")
++    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
++        String actionID = getResourceName(request);
++        String action = request.getParameter(RestConstants.ACTION_PARAM);
++
++        DagEngine dagEngine = Services.get().get(DagEngineService.class).getDagEngine(getUser(request));
++
++        if (action.equals(RestConstants.ACTION_SHOW_LOG)) {
++            response.setContentType(TEXT_UTF8);
++            try {
++                dagEngine.streamLog(actionID, response.getWriter(), request.getParameterMap());
++            } catch (DagEngineException e) {
++                throw new XServletException(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e);
++            }
++        } else {
++            throw new XServletException(HttpServletResponse.SC_BAD_REQUEST, ErrorCode.E0303,
++                    RestConstants.ACTION_PARAM, action);
++        }
++        response.setStatus(HttpServletResponse.SC_OK);
++    }
++
++}
++
+diff --git core/src/test/java/org/apache/oozie/client/TestWorkflowClient.java core/src/test/java/org/apache/oozie/client/TestWorkflowClient.java
+index e2e0f11..8019001 100644
+--- core/src/test/java/org/apache/oozie/client/TestWorkflowClient.java
++++ core/src/test/java/org/apache/oozie/client/TestWorkflowClient.java
+@@ -25,6 +25,7 @@ import org.apache.hadoop.fs.Path;
+ import org.apache.oozie.BuildInfo;
+ import org.apache.oozie.client.OozieClient.SYSTEM_MODE;
+ import org.apache.oozie.client.rest.RestConstants;
++import org.apache.oozie.servlet.ActionServlet;
+ import org.apache.oozie.servlet.DagServletTestCase;
+ import org.apache.oozie.servlet.MockCoordinatorEngineService;
+ import org.apache.oozie.servlet.MockDagEngineService;
+@@ -59,6 +60,7 @@ public class TestWorkflowClient extends DagServletTestCase {
+         new V2AdminServlet();
+         new SLAServlet();
+         new V2SLAServlet();
++        new ActionServlet();
+     }
+ 
+     private static final boolean IS_SECURITY_ENABLED = false;
+@@ -69,13 +71,14 @@ public class TestWorkflowClient extends DagServletTestCase {
+             VERSION_0 + "/jobs", VERSION_1 + "/jobs", VERSION_2 + "/jobs",
+             VERSION_0 + "/job/*", VERSION_1 + "/job/*", VERSION_2 + "/job/*",
+             VERSION_1 + "/admin/*", VERSION_2 + "/admin/*",
+-            VERSION_1 + "/sla/*", VERSION_2 + "/sla/*" };
++            VERSION_1 + "/sla/*", VERSION_2 + "/sla/*",
++            VERSION_2 + "/action/*"};
+     @SuppressWarnings("rawtypes")
+     static final Class[] SERVLET_CLASSES = {HeaderTestingVersionServlet.class,
+             V0JobsServlet.class, V1JobsServlet.class, V1JobsServlet.class,
+             V0JobServlet.class, V1JobServlet.class, V2JobServlet.class,
+             V1AdminServlet.class, V2AdminServlet.class,
+-            SLAServlet.class, V2SLAServlet.class};
++            SLAServlet.class, V2SLAServlet.class, ActionServlet.class};
+ 
+     protected void setUp() throws Exception {
+         super.setUp();
+@@ -440,6 +443,8 @@ public class TestWorkflowClient extends DagServletTestCase {
+                 OozieClient wc = new OozieClient(oozieUrl);
+                 String jobId = MockDagEngineService.JOB_ID + "1" + MockDagEngineService.JOB_ID_END;
+                 assertEquals(RestConstants.JOB_SHOW_LOG, wc.getJobLog(jobId));
++                String actionId = jobId + "@action-1";
++                assertEquals(RestConstants.ACTION_SHOW_LOG, wc.getLog(actionId));
+ 
+                 WorkflowAction wfAction = wc.getWorkflowActionInfo(jobId);
+ 
+diff --git core/src/test/java/org/apache/oozie/servlet/MockDagEngineService.java core/src/test/java/org/apache/oozie/servlet/MockDagEngineService.java
+index cdd4c7f..a14eb38 100644
+--- core/src/test/java/org/apache/oozie/servlet/MockDagEngineService.java
++++ core/src/test/java/org/apache/oozie/servlet/MockDagEngineService.java
+@@ -193,7 +193,12 @@ public class MockDagEngineService extends DagEngineService {
+         public void streamLog(String jobId, Writer writer, Map<String, String[]> params) throws IOException, DagEngineException {
+             did = RestConstants.JOB_SHOW_LOG;
+             validateWorkflowIdx(jobId);
+-            writer.write(LOG);
++            if (jobId.contains("@")) {
++                writer.write(RestConstants.ACTION_SHOW_LOG);
++            }
++            else {
++                writer.write(LOG);
++            }
+         }
+ 
+         @Override
+@@ -212,6 +217,9 @@ public class MockDagEngineService extends DagEngineService {
+         private int validateWorkflowIdx(String jobId) throws DagEngineException {
+             int idx = -1;
+             try {
++                if (jobId.contains("@")) {
++                    jobId = jobId.substring(0, jobId.indexOf("@"));
++                }
+                 if (jobId.endsWith(JOB_ID_END)) {
+                     jobId = jobId.replace(JOB_ID, "");
+                     jobId = jobId.replace(JOB_ID_END, "");
+diff --git webapp/src/main/webapp/WEB-INF/web-common.xml webapp/src/main/webapp/WEB-INF/web-common.xml
+index 3d7a0a9..7489c24 100644
+--- webapp/src/main/webapp/WEB-INF/web-common.xml
++++ webapp/src/main/webapp/WEB-INF/web-common.xml
+@@ -109,6 +109,13 @@
+         <load-on-startup>1</load-on-startup>
+     </servlet>
+ 
++    <servlet>
++        <servlet-name>action</servlet-name>
++        <display-name>WS API for a specific Workflow Action</display-name>
++        <servlet-class>org.apache.oozie.servlet.ActionServlet</servlet-class>
++        <load-on-startup>1</load-on-startup>
++    </servlet>
++
+     <!-- servlet-mapping -->
+     <servlet-mapping>
+         <servlet-name>versions</servlet-name>
+@@ -175,6 +182,11 @@
+         <url-pattern>/v2/sla/*</url-pattern>
+     </servlet-mapping>
+ 
++    <servlet-mapping>
++        <servlet-name>action</servlet-name>
++        <url-pattern>/v2/action/*</url-pattern>
++    </servlet-mapping>
++
+     <!-- welcome-file -->
+     <welcome-file-list>
+         <welcome-file>index.jsp</welcome-file>

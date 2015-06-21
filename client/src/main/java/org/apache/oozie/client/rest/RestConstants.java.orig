@@ -31,8 +31,6 @@ public interface RestConstants {
 
     public static final String ADMIN = "admin";
 
-    public static final String ACTION = "action";
-
     public static final String JSON_CONTENT_TYPE = "application/json";
 
     public static final String XML_CONTENT_TYPE = "application/xml";
@@ -210,6 +208,4 @@ public interface RestConstants {
     public static final String SLA_MAX_DURATION = "sla-max-duration";
 
     public static final String JOB_COORD_SCOPE_ACTION_LIST = "action-list";
-
-    public static final String ACTION_SHOW_LOG = "log";
 }

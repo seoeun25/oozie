@@ -1,0 +1,17 @@
+***************
+*** 1076,1082 ****
+                  }
+                  else {
+                      if (!options.contains(ACTION_OPTION) && !options.contains(DATE_OPTION)) {
+-                         wc.getJobLog(commandLine.getOptionValue(LOG_OPTION), null, null, ps);
+                      }
+                      else {
+                          throw new OozieCLIException("Invalid options provided for log retrieval. " + ACTION_OPTION
+--- 1076,1082 ----
+                  }
+                  else {
+                      if (!options.contains(ACTION_OPTION) && !options.contains(DATE_OPTION)) {
++                         wc.getLog(commandLine.getOptionValue(LOG_OPTION), ps);
+                      }
+                      else {
+                          throw new OozieCLIException("Invalid options provided for log retrieval. " + ACTION_OPTION

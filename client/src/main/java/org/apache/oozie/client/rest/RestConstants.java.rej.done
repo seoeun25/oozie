@@ -1,0 +1,13 @@
+***************
+*** 175,178 ****
+  
+      public static final String ALL_WORKFLOWS_FOR_COORD_ACTION = "allruns";
+  
+  }
+--- 177,182 ----
+  
+      public static final String ALL_WORKFLOWS_FOR_COORD_ACTION = "allruns";
+  
++     public static final String ACTION_SHOW_LOG = "log";
++ 
+  }

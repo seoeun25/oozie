@@ -1,0 +1,42 @@
+***************
+*** 109,114 ****
+          <load-on-startup>1</load-on-startup>
+      </servlet>
+  
+      <!-- servlet-mapping -->
+      <servlet-mapping>
+          <servlet-name>versions</servlet-name>
+--- 109,121 ----
+          <load-on-startup>1</load-on-startup>
+      </servlet>
+  
++     <servlet>
++         <servlet-name>action</servlet-name>
++         <display-name>WS API for a specific Workflow Action</display-name>
++         <servlet-class>org.apache.oozie.servlet.ActionServlet</servlet-class>
++         <load-on-startup>1</load-on-startup>
++     </servlet>
++ 
+      <!-- servlet-mapping -->
+      <servlet-mapping>
+          <servlet-name>versions</servlet-name>
+***************
+*** 175,180 ****
+          <url-pattern>/v2/sla/*</url-pattern>
+      </servlet-mapping>
+  
+      <!-- welcome-file -->
+      <welcome-file-list>
+          <welcome-file>index.jsp</welcome-file>
+--- 182,192 ----
+          <url-pattern>/v2/sla/*</url-pattern>
+      </servlet-mapping>
+  
++     <servlet-mapping>
++         <servlet-name>action</servlet-name>
++         <url-pattern>/v2/action/*</url-pattern>
++     </servlet-mapping>
++ 
+      <!-- welcome-file -->
+      <welcome-file-list>
+          <welcome-file>index.jsp</welcome-file>
