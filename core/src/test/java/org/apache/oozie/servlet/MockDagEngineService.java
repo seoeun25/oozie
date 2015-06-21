@@ -219,7 +219,12 @@ public class MockDagEngineService extends DagEngineService {
         public void streamLog(String jobId, Writer writer, Map<String, String[]> params) throws IOException, DagEngineException {
             did = RestConstants.JOB_SHOW_LOG;
             validateWorkflowIdx(jobId);
-            writer.write(LOG);
+            if (jobId.contains("@")) {
+                writer.write(RestConstants.ACTION_SHOW_LOG);
+            }
+            else {
+                writer.write(LOG);
+            }
         }
 
         @Override
@@ -238,6 +243,9 @@ public class MockDagEngineService extends DagEngineService {
         private int validateWorkflowIdx(String jobId) throws DagEngineException {
             int idx = -1;
             try {
+                if (jobId.contains("@")) {
+                    jobId = jobId.substring(0, jobId.indexOf("@"));
+                }
                 if (jobId.endsWith(JOB_ID_END)) {
                     jobId = jobId.replace(JOB_ID, "");
                     jobId = jobId.replace(JOB_ID_END, "");
