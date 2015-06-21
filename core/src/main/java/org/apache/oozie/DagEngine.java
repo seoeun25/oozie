@@ -18,6 +18,7 @@
 
 package org.apache.oozie;
 
+import org.apache.oozie.service.UUIDService;
 import org.apache.oozie.service.XLogService;
 import org.apache.oozie.service.DagXLogInfoService;
 import org.apache.hadoop.conf.Configuration;
@@ -401,7 +402,16 @@ public class DagEngine extends BaseEngine {
     @Override
     public void streamLog(String jobId, Writer writer, Map<String, String[]> params) throws IOException,
             DagEngineException {
-        streamJobLog(jobId, writer, params, LOG_TYPE.LOG);
+        if (jobId.contains("@")) {
+            try {
+                streamActionLog(new XLogFilter(new XLogUserFilterParam(params)), jobId, writer, params, LOG_TYPE.LOG);
+            }
+            catch (Exception e) {
+                throw new IOException(e);
+            }
+        } else {
+            streamJobLog(jobId, writer, params, LOG_TYPE.LOG);
+        }
     }
 
     /**
@@ -452,6 +462,26 @@ public class DagEngine extends BaseEngine {
     private void streamJobLog(XLogFilter filter, String jobId, Writer writer, Map<String, String[]> params, LOG_TYPE logType)
             throws IOException, DagEngineException {
         try {
+            filter.setParameter(DagXLogInfoService.JOB, jobId);
+            WorkflowJob job = getJob(jobId);
+            Date lastTime = job.getEndTime();
+            if (lastTime == null) {
+                lastTime = job.getLastModifiedTime();
+            }
+            fetchLog(filter, job.getCreatedTime(), lastTime, writer, params, logType);
+        }
+        catch (Exception e) {
+            throw new IOException(e);
+        }
+    }
+
+    private void streamActionLog(XLogFilter filter, String actionId, Writer writer, Map<String, String[]> params, LOG_TYPE logType)
+            throws IOException, DagEngineException {
+        try {
+            String jobId;
+            jobId = Services.get().get(UUIDService.class).getId(actionId);
+            filter.setParameter(DagXLogInfoService.ACTION, actionId);
+
             filter.setParameter(DagXLogInfoService.JOB, jobId);
             WorkflowJob job = getJob(jobId);
             Date lastTime = job.getEndTime();

@@ -1204,7 +1204,8 @@ public class OozieCLI {
                 }
                 else {
                     if (!options.contains(ACTION_OPTION) && !options.contains(DATE_OPTION)) {
-                        wc.getJobLog(commandLine.getOptionValue(LOG_OPTION), null, null, logFilter, ps);
+                        //wc.getJobLog(commandLine.getOptionValue(LOG_OPTION), null, null, logFilter, ps);
+                        wc.getLog(commandLine.getOptionValue(LOG_OPTION), logFilter, ps);
                     }
                     else {
                         throw new OozieCLIException("Invalid options provided for log retrieval. " + ACTION_OPTION

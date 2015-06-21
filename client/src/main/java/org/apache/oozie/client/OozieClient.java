@@ -932,6 +932,32 @@ public class OozieClient {
         new JobAction(jobId, RestConstants.JOB_ACTION_CHANGE, changeValue).call();
     }
 
+    public String getActionLog(String actionId, PrintStream ps) throws OozieClientException {
+        return new ActionLog(actionId, ps).call();
+    }
+
+    private class ActionLog extends ActionMetadata {
+        ActionLog(String actionId, PrintStream ps) {
+            super(actionId, RestConstants.ACTION_SHOW_LOG, ps);
+        }
+    }
+
+    public String getLog(String id) throws OozieClientException {
+        return getLog(id, null, null);
+    }
+
+//    public String getLog(String id, PrintStream ps) throws OozieClientException {
+//        return id.contains("@") ? getActionLog(id, ps) : getJobLog(id, null, null, ps);
+//    }
+
+    public String getLog(String id, String logFilter,
+                         PrintStream ps) throws OozieClientException {
+        return id.contains("@") ? getActionLog(id, ps) : getJobLog(id, null, null, logFilter, ps);
+    }
+
+
+
+
     /**
      * Ignore a coordinator job.
      *
@@ -1080,9 +1106,9 @@ public class OozieClient {
      * @param ps Printstream of command line interface
      * @throws OozieClientException thrown if the job info could not be retrieved.
      */
-    public void getJobLog(String jobId, String logRetrievalType, String logRetrievalScope, String logFilter,
+    public String getJobLog(String jobId, String logRetrievalType, String logRetrievalScope, String logFilter,
             PrintStream ps) throws OozieClientException {
-        new JobLog(jobId, logRetrievalType, logRetrievalScope, logFilter, ps).call();
+        return new JobLog(jobId, logRetrievalType, logRetrievalScope, logFilter, ps).call();
     }
 
     /**
@@ -1105,9 +1131,9 @@ public class OozieClient {
      * @param ps Printstream of command line interface
      * @throws OozieClientException thrown if the job info could not be retrieved.
      */
-    public void getJobLog(String jobId, String logRetrievalType, String logRetrievalScope, PrintStream ps)
+    public String getJobLog(String jobId, String logRetrievalType, String logRetrievalScope, PrintStream ps)
             throws OozieClientException {
-        getJobLog(jobId, logRetrievalType, logRetrievalScope, null, ps);
+        return getJobLog(jobId, logRetrievalType, logRetrievalScope, null, ps);
     }
 
     private class JobLog extends JobMetadata {
@@ -1180,25 +1206,48 @@ public class OozieClient {
         }
     }
 
-    private class JobMetadata extends ClientCallable<String> {
-        PrintStream printStream;
+    private class ActionMetadata extends Metadata {
+
+        ActionMetadata(String jobId, String logRetrievalType, String logRetrievalScope, String metaType, String logFilter,
+                    PrintStream ps) {
+            super(RestConstants.ACTION, notEmpty(jobId, "actionId"), prepareParams(RestConstants.JOB_SHOW_PARAM,
+                    metaType, RestConstants.JOB_LOG_TYPE_PARAM, logRetrievalType, RestConstants.JOB_LOG_SCOPE_PARAM,
+                    logRetrievalScope, RestConstants.LOG_FILTER_OPTION, logFilter), ps);
+        }
+
+        ActionMetadata(String actionId, String metaType, PrintStream ps) {
+            super(RestConstants.ACTION, notEmpty(actionId, "actionId"), prepareParams(RestConstants.ACTION_PARAM,
+                    metaType), ps);
+        }
+    }
+
+    private class JobMetadata extends Metadata {
 
         JobMetadata(String jobId, String metaType) {
-            super("GET", RestConstants.JOB, notEmpty(jobId, "jobId"), prepareParams(RestConstants.JOB_SHOW_PARAM,
-                    metaType));
+            super(RestConstants.JOB, notEmpty(jobId, "jobId"), prepareParams(RestConstants.JOB_SHOW_PARAM, metaType));
         }
 
         JobMetadata(String jobId, String metaType, PrintStream ps) {
-            this(jobId, metaType);
-            printStream = ps;
-
+            super(RestConstants.JOB, notEmpty(jobId, "jobId"), prepareParams(RestConstants.JOB_SHOW_PARAM, metaType), ps);
         }
 
         JobMetadata(String jobId, String logRetrievalType, String logRetrievalScope, String metaType, String logFilter,
-                PrintStream ps) {
-            super("GET", RestConstants.JOB, notEmpty(jobId, "jobId"), prepareParams(RestConstants.JOB_SHOW_PARAM,
+                    PrintStream ps) {
+            super(RestConstants.JOB, notEmpty(jobId, "jobId"), prepareParams(RestConstants.JOB_SHOW_PARAM,
                     metaType, RestConstants.JOB_LOG_TYPE_PARAM, logRetrievalType, RestConstants.JOB_LOG_SCOPE_PARAM,
-                    logRetrievalScope, RestConstants.LOG_FILTER_OPTION, logFilter));
+                    logRetrievalScope, RestConstants.LOG_FILTER_OPTION, logFilter), ps);
+        }
+    }
+
+    private class Metadata extends ClientCallable<String> {
+        PrintStream printStream;
+
+        Metadata(String collection, String resource, Map<String, String> params) {
+            super("GET", collection, resource, params);
+        }
+
+        Metadata(String collection, String resource, Map<String, String> params, PrintStream ps) {
+            this(collection, resource, params);
             printStream = ps;
         }
 

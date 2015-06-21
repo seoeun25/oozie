@@ -26,6 +26,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.oozie.BuildInfo;
 import org.apache.oozie.client.OozieClient.SYSTEM_MODE;
 import org.apache.oozie.client.rest.RestConstants;
+import org.apache.oozie.servlet.ActionServlet;
 import org.apache.oozie.servlet.DagServletTestCase;
 import org.apache.oozie.servlet.MockCoordinatorEngineService;
 import org.apache.oozie.servlet.MockDagEngineService;
@@ -60,6 +61,7 @@ public class TestWorkflowClient extends DagServletTestCase {
         new V2AdminServlet();
         new SLAServlet();
         new V2SLAServlet();
+        new ActionServlet();
     }
 
     private static final boolean IS_SECURITY_ENABLED = false;
@@ -70,13 +72,14 @@ public class TestWorkflowClient extends DagServletTestCase {
             VERSION_0 + "/jobs", VERSION_1 + "/jobs", VERSION_2 + "/jobs",
             VERSION_0 + "/job/*", VERSION_1 + "/job/*", VERSION_2 + "/job/*",
             VERSION_1 + "/admin/*", VERSION_2 + "/admin/*",
-            VERSION_1 + "/sla/*", VERSION_2 + "/sla/*" };
+            VERSION_1 + "/sla/*", VERSION_2 + "/sla/*",
+            VERSION_2 + "/action/*"};
     @SuppressWarnings("rawtypes")
     static final Class[] SERVLET_CLASSES = {HeaderTestingVersionServlet.class,
             V0JobsServlet.class, V1JobsServlet.class, V1JobsServlet.class,
             V0JobServlet.class, V1JobServlet.class, V2JobServlet.class,
             V1AdminServlet.class, V2AdminServlet.class,
-            SLAServlet.class, V2SLAServlet.class};
+            SLAServlet.class, V2SLAServlet.class, ActionServlet.class};
 
     protected void setUp() throws Exception {
         super.setUp();
@@ -441,6 +444,8 @@ public class TestWorkflowClient extends DagServletTestCase {
                 OozieClient wc = new OozieClient(oozieUrl);
                 String jobId = MockDagEngineService.JOB_ID + "1" + MockDagEngineService.JOB_ID_END;
                 assertEquals(RestConstants.JOB_SHOW_LOG, wc.getJobLog(jobId));
+                String actionId = jobId + "@action-1";
+                assertEquals(RestConstants.ACTION_SHOW_LOG, wc.getLog(actionId));
 
                 WorkflowAction wfAction = wc.getWorkflowActionInfo(jobId);
 
