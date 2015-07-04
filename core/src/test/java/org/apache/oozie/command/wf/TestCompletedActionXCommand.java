@@ -51,7 +51,7 @@ public class TestCompletedActionXCommand extends XDataTestCase {
 
         WorkflowJobBean job = addRecordToWfJobTable(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
         WorkflowActionBean action = addRecordToWfActionTable(job.getId(), "1", WorkflowAction.Status.PREP);
-        final CompletedActionXCommand cmd = new CompletedActionXCommand(action.getId(), "SUCCEEDED", null);
+        final ActionCompletedXCommand cmd = new ActionCompletedXCommand(action.getId(), "SUCCEEDED", null);
 
         long xexceptionCount;
         try {
@@ -120,7 +120,7 @@ public class TestCompletedActionXCommand extends XDataTestCase {
 
         WorkflowJobBean job = addRecordToWfJobTable(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
         final WorkflowActionBean action = addRecordToWfActionTable(job.getId(), "1", WorkflowAction.Status.PREP);
-        final CompletedActionXCommand cmd = new CompletedActionXCommand(action.getId(), "SUCCEEDED", null);
+        final ActionCompletedXCommand cmd = new ActionCompletedXCommand(action.getId(), "SUCCEEDED", null);
 
         long xexceptionCount;
         try {
