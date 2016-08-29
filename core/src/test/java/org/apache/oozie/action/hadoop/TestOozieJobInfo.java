@@ -43,9 +43,6 @@ import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
-import org.apache.oozie.action.hadoop.MapReduceActionExecutor;
-import org.apache.oozie.action.hadoop.MapperReducerForTest;
-import org.apache.oozie.action.hadoop.OozieJobInfo;
 import org.apache.oozie.client.Job;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.command.CommandException;
@@ -53,7 +50,6 @@ import org.apache.oozie.command.bundle.BundleStartXCommand;
 import org.apache.oozie.command.bundle.BundleSubmitXCommand;
 import org.apache.oozie.command.wf.ActionXCommand;
 import org.apache.oozie.command.wf.ActionXCommand.ActionExecutorContext;
-import org.apache.oozie.command.wf.JobXCommand;
 import org.apache.oozie.executor.jpa.BundleActionQueryExecutor;
 import org.apache.oozie.executor.jpa.BundleJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
@@ -65,7 +61,6 @@ import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.UUIDService;
-import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.UUIDService.ApplicationType;
 import org.apache.oozie.test.XDataTestCase;
 import org.apache.oozie.util.IOUtils;
@@ -91,7 +86,7 @@ public class TestOozieJobInfo extends XDataTestCase {
 
     public void testInfoWithBundle() throws Exception {
 
-        Services.get().getConf().setBoolean(OozieJobInfo.CONF_JOB_INFO, true);
+        getConfiguration(services).setBoolean(OozieJobInfo.CONF_JOB_INFO, true);
         OozieJobInfo.setJobInfo(true);
         BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.PREP, false);
         final JPAService jpaService = Services.get().get(JPAService.class);

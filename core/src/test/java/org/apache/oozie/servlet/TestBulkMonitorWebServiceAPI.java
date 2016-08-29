@@ -31,6 +31,7 @@ import java.util.concurrent.Callable;
 
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.executor.jpa.BundleJobInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordActionInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobsGetFromParentIdJPAExecutor;
@@ -47,9 +48,6 @@ import org.apache.oozie.service.ForTestAuthorizationService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.ProxyUserService;
 import org.apache.oozie.service.Services;
-import org.apache.oozie.servlet.AuthFilter;
-import org.apache.oozie.servlet.HostnameFilter;
-import org.apache.oozie.servlet.V1JobsServlet;
 import org.apache.oozie.test.EmbeddedServletContainer;
 import org.apache.oozie.test.XDataTestCase;
 import org.apache.oozie.util.DateUtils;
@@ -116,10 +114,11 @@ public class TestBulkMonitorWebServiceAPI extends XDataTestCase {
         this.servletPath = servletPath[0];
         try {
             String proxyUser = getTestUser();
-            services.getConf().set(ProxyUserService.CONF_PREFIX + proxyUser + ProxyUserService.HOSTS, "*");
-            services.getConf().set(ProxyUserService.CONF_PREFIX + proxyUser + ProxyUserService.GROUPS, "*");
+            Configuration conf = getConfiguration(services);
+            conf.set(ProxyUserService.CONF_PREFIX + proxyUser + ProxyUserService.HOSTS, "*");
+            conf.set(ProxyUserService.CONF_PREFIX + proxyUser + ProxyUserService.GROUPS, "*");
             services.init();
-            services.getConf().setBoolean(AuthorizationService.CONF_SECURITY_ENABLED, securityEnabled);
+            conf.setBoolean(AuthorizationService.CONF_SECURITY_ENABLED, securityEnabled);
             Services.get().setService(ForTestAuthorizationService.class);
             Services.get().setService(BundleEngineService.class);
             container = new EmbeddedServletContainer("oozie");

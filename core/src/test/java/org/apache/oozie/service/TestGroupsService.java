@@ -30,8 +30,9 @@ public class TestGroupsService extends XTestCase {
 
     public void testService() throws Exception {
         Services services = new Services();
-        Configuration conf = services.getConf();
-        conf.set(Services.CONF_SERVICE_CLASSES, StringUtils.join(",", Arrays.asList(GroupsService.class.getName())));
+        Configuration conf = getConfiguration(services);
+        conf.set(Services.CONF_SERVICE_CLASSES, StringUtils.join(",",
+                Arrays.asList(GroupsService.class.getName())));
         services.init();
         try {
             GroupsService groups = services.get(GroupsService.class);
@@ -46,7 +47,7 @@ public class TestGroupsService extends XTestCase {
 
     public void testInvalidGroupsMapping() throws Exception {
         Services services = new Services();
-        Configuration conf = services.getConf();
+        Configuration conf = getConfiguration(services);
         conf.set(Services.CONF_SERVICE_CLASSES, StringUtils.join(",", Arrays.asList(GroupsService.class.getName())));
         conf.set("oozie.service.GroupsService.hadoop.security.group.mapping", String.class.getName());
         try {

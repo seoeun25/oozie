@@ -21,7 +21,6 @@ package org.apache.oozie.service;
 import java.net.URI;
 import java.util.Random;
 
-import javax.jms.JMSException;
 import javax.jms.Session;
 
 import org.apache.activemq.broker.BrokerService;
@@ -123,7 +122,7 @@ public class TestJMSAccessorService extends XTestCase {
         try {
             services.destroy();
             services = super.setupServicesForHCatalog();
-            Configuration conf = services.getConf();
+            Configuration conf = getConfiguration(services);
             // set the connection factory name
             String jmsURL = "hcat://${1}.${2}.server.com:8020=java.naming.factory.initial#" +
                     "org.apache.activemq.jndi.ActiveMQInitialContextFactory" +
@@ -157,7 +156,7 @@ public class TestJMSAccessorService extends XTestCase {
         services = super.setupServicesForHCatalog();
         int randomPort = 30000 + random.nextInt(10000);
         String brokerURl = "tcp://localhost:" + randomPort;
-        Configuration servicesConf = services.getConf();
+        Configuration servicesConf = getConfiguration(services);
         servicesConf.set(JMSAccessorService.CONF_RETRY_INITIAL_DELAY, "1");
         servicesConf.set(JMSAccessorService.CONF_RETRY_MAX_ATTEMPTS, "3");
         servicesConf.set(HCatAccessorService.JMS_CONNECTIONS_PROPERTIES, "default=java.naming.factory.initial#"
@@ -195,7 +194,7 @@ public class TestJMSAccessorService extends XTestCase {
         String brokerURL = "tcp://localhost:" + randomPort;
         String jndiPropertiesString = "java.naming.factory.initial#" + ActiveMQConnFactory + ";"
                 + "java.naming.provider.url#" + brokerURL + ";" + "connectionFactoryNames#" + "ConnectionFactory";
-        Configuration servicesConf = services.getConf();
+        Configuration servicesConf = getConfiguration(services);
         servicesConf.set(JMSAccessorService.CONF_RETRY_INITIAL_DELAY, "1");
         servicesConf.set(JMSAccessorService.CONF_RETRY_MAX_ATTEMPTS, "3");
         servicesConf.set(HCatAccessorService.JMS_CONNECTIONS_PROPERTIES, "default=" + jndiPropertiesString);
@@ -244,7 +243,7 @@ public class TestJMSAccessorService extends XTestCase {
         services = super.setupServicesForHCatalog();
         String jndiPropertiesString = "java.naming.factory.initial#" + ActiveMQConnFactory + ";"
                 + "java.naming.provider.url#" + "tcp://localhost:12345;connectionFactoryNames#ConnectionFactory";
-        Configuration servicesConf = services.getConf();
+        Configuration servicesConf = getConfiguration(services);
         servicesConf.set(JMSAccessorService.CONF_RETRY_INITIAL_DELAY, "1");
         servicesConf.set(JMSAccessorService.CONF_RETRY_MAX_ATTEMPTS, "1");
         servicesConf.set(HCatAccessorService.JMS_CONNECTIONS_PROPERTIES, "default=" + jndiPropertiesString);

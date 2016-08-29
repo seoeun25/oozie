@@ -134,7 +134,7 @@ public class TestReRunXCommand extends XDataTestCase {
     public void _testRerunFork() throws Exception {
         // We need the shell schema and action for this test
         Services.get().setService(ActionService.class);
-        Services.get().getConf().set(SchemaService.WF_CONF_EXT_SCHEMAS, "shell-action-0.3.xsd");
+        ConfigurationService.set(SchemaService.WF_CONF_EXT_SCHEMAS, "shell-action-0.3.xsd");
         Services.get().setService(SchemaService.class);
 
         Reader reader = IOUtils.getResourceAsReader("rerun-wf-fork.xml", -1);
@@ -435,8 +435,7 @@ public class TestReRunXCommand extends XDataTestCase {
         });
         Properties newConf = wfClient.createConfiguration();
         newConf.setProperty(OozieClient.RERUN_FAIL_NODES, "true");
-        Services.get().getConf().setBoolean(ReRunXCommand.DISABLE_CHILD_RERUN, true);
-
+        ConfigurationService.setBoolean(ReRunXCommand.DISABLE_CHILD_RERUN, true);
         try {
             wfClient.reRun(wfId, newConf);
             fail("OozieClientException should have been thrown (" + ErrorCode.E0755 +
@@ -445,7 +444,7 @@ public class TestReRunXCommand extends XDataTestCase {
             assertEquals(ErrorCode.E0755.toString(), ex.getErrorCode());
         }
 
-        Services.get().getConf().setBoolean(ReRunXCommand.DISABLE_CHILD_RERUN, false);
+        ConfigurationService.setBoolean(ReRunXCommand.DISABLE_CHILD_RERUN, false);
         wfClient.reRun(wfId, newConf);
         waitFor(15 * 1000, new Predicate() {
             public boolean evaluate() throws Exception {

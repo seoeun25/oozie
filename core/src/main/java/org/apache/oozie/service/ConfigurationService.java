@@ -493,19 +493,21 @@ public class ConfigurationService implements Service, Instrumentable {
 
     @VisibleForTesting
     public static void set(String name, String value) {
-        Configuration conf = Services.get().getConf();
-        conf.set(name, value);
+        getConfiguration().set(name, value);
     }
 
     @VisibleForTesting
     public static void setBoolean(String name, boolean value) {
-        Configuration conf = Services.get().getConf();
-        conf.setBoolean(name, value);
+        getConfiguration().setBoolean(name, value);
+    }
+
+    @VisibleForTesting
+    public static void setInt(String name, int value) {
+        getConfiguration().setInt(name, value);
     }
 
     public static String get(String name) {
-        Configuration conf = Services.get().getConf();
-        return get(conf, name);
+        return get(getConfiguration(), name);
     }
 
     public static String get(Configuration conf, String name) {
@@ -513,8 +515,7 @@ public class ConfigurationService implements Service, Instrumentable {
     }
 
     public static String[] getStrings(String name) {
-        Configuration conf = Services.get().getConf();
-        return getStrings(conf, name);
+        return getStrings(getConfiguration(), name);
     }
 
     public static String[] getStrings(Configuration conf, String name) {
@@ -522,8 +523,7 @@ public class ConfigurationService implements Service, Instrumentable {
     }
 
     public static boolean getBoolean(String name) {
-        Configuration conf = Services.get().getConf();
-        return getBoolean(conf, name);
+        return getBoolean(getConfiguration(), name);
     }
 
     public static boolean getBoolean(Configuration conf, String name) {
@@ -531,13 +531,7 @@ public class ConfigurationService implements Service, Instrumentable {
     }
 
     public static int getInt(String name) {
-        Configuration conf = Services.get().getConf();
-        return getInt(conf, name);
-    }
-
-    public static int getInt(String name, int defaultValue) {
-        Configuration conf = Services.get().getConf();
-        return conf.getInt(name, defaultValue);
+        return getInt(getConfiguration(), name);
     }
 
     public static int getInt(Configuration conf, String name) {
@@ -545,29 +539,27 @@ public class ConfigurationService implements Service, Instrumentable {
     }
 
     public static float getFloat(String name) {
-        Configuration conf = Services.get().getConf();
+        return getFloat(getConfiguration(), name);
+    }
+
+    public static float getFloat(Configuration conf, String name) {
         return conf.getFloat(name, ConfigUtils.FLOAT_DEFAULT);
     }
 
     public static long getLong(String name) {
-        return getLong(name, ConfigUtils.LONG_DEFAULT);
-    }
-
-    public static long getLong(String name, long defultValue) {
-        Configuration conf = Services.get().getConf();
-        return getLong(conf, name, defultValue);
+        return getLong(getConfiguration(), name);
     }
 
     public static long getLong(Configuration conf, String name) {
-        return getLong(conf, name, ConfigUtils.LONG_DEFAULT);
-    }
-    public static long getLong(Configuration conf, String name, long defultValue) {
-        return conf.getLong(name, defultValue);
+        return conf.getLong(name, ConfigUtils.LONG_DEFAULT);
     }
 
     public static Class<?>[] getClasses(String name) {
-        Configuration conf = Services.get().getConf();
-        return getClasses(conf, name);
+        return getClasses(getConfiguration(), name);
+    }
+
+    public static Class<?> getClass(String name) {
+        return getClass(getConfiguration(), name);
     }
 
     public static Class<?>[] getClasses(Configuration conf, String name) {
@@ -600,8 +592,11 @@ public class ConfigurationService implements Service, Instrumentable {
     }
 
     public static String getPassword(String name, String defaultValue) {
-        Configuration conf = Services.get().getConf();
-        return getPassword(conf, name, defaultValue);
+        return getPassword(getConfiguration(), name, defaultValue);
+    }
+
+    private static Configuration getConfiguration() {
+        return Services.get().get(ConfigurationService.class).getConf();
     }
 
 }

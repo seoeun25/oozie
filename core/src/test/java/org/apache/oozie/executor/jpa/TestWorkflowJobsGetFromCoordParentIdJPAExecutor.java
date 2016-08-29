@@ -45,7 +45,7 @@ public class TestWorkflowJobsGetFromCoordParentIdJPAExecutor extends XDataTestCa
     protected void setUp() throws Exception {
         super.setUp();
         services = new Services();
-        setClassesToBeExcluded(services.getConf(), excludedServices);
+        setClassesToBeExcluded(getConfiguration(services), excludedServices);
         services.init();
     }
 

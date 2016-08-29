@@ -39,7 +39,7 @@ public class TestCoordJobGetReadyActionsJPAExecutor extends XDataTestCase {
     protected void setUp() throws Exception {
         super.setUp();
         services = new Services();
-        setClassesToBeExcluded(services.getConf(), excludedServices);
+        setClassesToBeExcluded(getConfiguration(services), excludedServices);
         services.init();
     }
 

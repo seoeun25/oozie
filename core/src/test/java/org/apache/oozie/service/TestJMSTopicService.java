@@ -21,6 +21,7 @@ package org.apache.oozie.service;
 
 import java.util.Properties;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.BundleActionBean;
 import org.apache.oozie.BundleJobBean;
 import org.apache.oozie.CoordinatorActionBean;
@@ -33,7 +34,6 @@ import org.apache.oozie.client.Job;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.AppType;
-import org.apache.oozie.service.Services;
 import org.apache.oozie.test.XDataTestCase;
 import org.apache.oozie.workflow.WorkflowInstance;
 import org.junit.After;
@@ -57,7 +57,8 @@ public class TestJMSTopicService extends XDataTestCase {
 
     private Services setupServicesForTopic() throws ServiceException {
         Services services = new Services();
-        services.getConf().set(Services.CONF_SERVICE_EXT_CLASSES, JMSTopicService.class.getName());
+        Configuration conf = getConfiguration(services);
+        conf.set(Services.CONF_SERVICE_EXT_CLASSES, JMSTopicService.class.getName());
         return services;
     }
 
@@ -93,8 +94,8 @@ public class TestJMSTopicService extends XDataTestCase {
     public void testTopicAsJobId() throws Exception {
         final String TOPIC_PREFIX = "oozie.";
         services = setupServicesForTopic();
-        services.getConf().set(JMSTopicService.TOPIC_NAME, "default=" + JMSTopicService.TopicType.JOBID.getValue());
-        services.getConf().set(JMSTopicService.TOPIC_PREFIX, TOPIC_PREFIX);
+        getConfiguration(services).set(JMSTopicService.TOPIC_NAME, "default=" + JMSTopicService.TopicType.JOBID.getValue());
+        getConfiguration(services).set(JMSTopicService.TOPIC_PREFIX, TOPIC_PREFIX);
         services.init();
         JMSTopicService jmsTopicService = Services.get().get(JMSTopicService.class);
         WorkflowJobBean wfj = addRecordToWfJobTable(WorkflowJob.Status.SUCCEEDED, WorkflowInstance.Status.SUCCEEDED);
@@ -126,7 +127,7 @@ public class TestJMSTopicService extends XDataTestCase {
     @Test
     public void testTopicAsFixedString() throws Exception {
         services = setupServicesForTopic();
-        services.getConf().set(
+        getConfiguration(services).set(
                 JMSTopicService.TOPIC_NAME,
                 JMSTopicService.JobType.WORKFLOW.getValue() + " =workflow,"
                         + JMSTopicService.JobType.COORDINATOR.getValue() + "=coord,"
@@ -158,7 +159,7 @@ public class TestJMSTopicService extends XDataTestCase {
     @Test
     public void testMixedTopic1() throws Exception {
         services = setupServicesForTopic();
-        services.getConf().set(
+        getConfiguration(services).set(
                 JMSTopicService.TOPIC_NAME,
                 JMSTopicService.JobType.WORKFLOW.getValue() + " = workflow,"
                         + JMSTopicService.JobType.COORDINATOR.getValue() + "=coord, default = "
@@ -190,7 +191,8 @@ public class TestJMSTopicService extends XDataTestCase {
     @Test
     public void testMixedTopic2() throws Exception {
         services = setupServicesForTopic();
-        services.getConf().set(
+        Configuration conf = getConfiguration(services);
+        conf.set(
                 JMSTopicService.TOPIC_NAME,
                 JMSTopicService.JobType.WORKFLOW.getValue() + " = workflow,"
                         + JMSTopicService.JobType.COORDINATOR.getValue() + "=coord");
@@ -222,7 +224,8 @@ public class TestJMSTopicService extends XDataTestCase {
     public void testIncorrectConfigurationJobType() {
         try {
             services = setupServicesForTopic();
-            services.getConf().set(JMSTopicService.TOPIC_NAME,
+            Configuration conf = getConfiguration(services);
+            conf.set(JMSTopicService.TOPIC_NAME,
                     "InvalidJobType" + " = workflow," + JMSTopicService.JobType.COORDINATOR.getValue() + "=coord");
             services.init();
             fail("Expected Service Exception");
@@ -236,7 +239,8 @@ public class TestJMSTopicService extends XDataTestCase {
     public void testIncorrectConfigurationDefault() {
         try {
             services = setupServicesForTopic();
-            services.getConf().set(JMSTopicService.TOPIC_NAME, "default=" + "invalidvalue");
+            Configuration conf = getConfiguration(services);
+            conf.set(JMSTopicService.TOPIC_NAME, "default=" + "invalidvalue");
             services.init();
             fail("Expected Service Exception");
         }
@@ -262,7 +266,7 @@ public class TestJMSTopicService extends XDataTestCase {
     @Test
     public void testTopicProperties2() throws Exception {
         services = setupServicesForTopic();
-        services.getConf().set(
+        getConfiguration(services).set(
                 JMSTopicService.TOPIC_NAME,
                 JMSTopicService.JobType.WORKFLOW.getValue() + " = workflow,"
                         + JMSTopicService.JobType.COORDINATOR.getValue() + "=coord");

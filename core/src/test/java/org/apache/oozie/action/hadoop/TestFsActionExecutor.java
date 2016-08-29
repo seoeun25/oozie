@@ -281,7 +281,7 @@ public class TestFsActionExecutor extends ActionExecutorTestCase {
     public void setUp() throws Exception {
         super.setUp();
         services = new Services();
-        services.getConf().set(URIHandlerService.URI_HANDLERS,
+        getConfiguration(services).set(URIHandlerService.URI_HANDLERS,
                 FSURIHandler.class.getName() + "," + HCatURIHandler.class.getName());
         services.setService(HCatAccessorService.class);
         services.init();

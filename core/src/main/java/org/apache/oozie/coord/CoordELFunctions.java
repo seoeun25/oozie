@@ -28,6 +28,7 @@ import org.apache.oozie.command.CommandException;
 import org.apache.oozie.coord.input.logic.CoordInputLogicEvaluatorUtil;
 import org.apache.oozie.dependency.URIHandler;
 import org.apache.oozie.dependency.URIHandler.Context;
+import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.URIHandlerService;
 import org.apache.oozie.util.DateUtils;
@@ -1112,7 +1113,7 @@ public class CoordELFunctions {
         int datasetFrequency = (int) getDSFrequency();// in minutes
         TimeUnit dsTimeUnit = getDSTimeUnit();
         int[] instCount = new int[1];
-        boolean useCurrentTime = Services.get().getConf().getBoolean(LATEST_EL_USE_CURRENT_TIME, false);
+        boolean useCurrentTime = ConfigurationService.getBoolean(LATEST_EL_USE_CURRENT_TIME);
         Calendar nominalInstanceCal;
         if (useCurrentTime) {
             nominalInstanceCal = getCurrentInstance(new Date(), instCount);

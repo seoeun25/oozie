@@ -119,7 +119,7 @@ public class TestEventGeneration extends XDataTestCase {
     protected void setUp() throws Exception {
         super.setUp();
         services = new Services();
-        Configuration conf = services.getConf();
+        Configuration conf = getConfiguration(services);
         // The EventHandlerService manipulates the queues in the background, so the actual test results depend on the
         // circumstances (like the speed of the machine, debugging etc).
         conf.setInt("oozie.service.EventHandlerService.worker.threads", 0);

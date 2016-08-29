@@ -20,6 +20,7 @@ package org.apache.oozie.service;
 
 import java.util.Collection;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.dependency.hcat.EhcacheHCatDependencyCache;
 import org.apache.oozie.util.HCatURI;
 import org.apache.oozie.util.XLog;
@@ -32,10 +33,11 @@ public class TestPartitionDependencyManagerEhcache extends TestPartitionDependen
     private void setupServices(String cacheName) throws ServiceException {
         Services.get().destroy();
         services = super.setupServicesForHCatalog();
-        services.getConf().set(PartitionDependencyManagerService.CACHE_MANAGER_IMPL,
+        Configuration conf = getConfiguration(services);
+        conf.set(PartitionDependencyManagerService.CACHE_MANAGER_IMPL,
                 EhcacheHCatDependencyCache.class.getName());
         if (cacheName != null) {
-            services.getConf().set(EhcacheHCatDependencyCache.CONF_CACHE_NAME, cacheName);
+            conf.set(EhcacheHCatDependencyCache.CONF_CACHE_NAME, cacheName);
         }
         services.init();
     }

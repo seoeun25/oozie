@@ -56,7 +56,7 @@ public class TestCoordKillXCommand extends XDataTestCase {
     protected void setUp() throws Exception {
         super.setUp();
         services = new Services();
-        setClassesToBeExcluded(services.getConf(), excludedServices);
+        setClassesToBeExcluded(getConfiguration(services), excludedServices);
         services.init();
     }
 
@@ -193,7 +193,7 @@ public class TestCoordKillXCommand extends XDataTestCase {
         Services.get().destroy();
         setSystemProperty(StatusTransitService.CONF_BACKWARD_SUPPORT_FOR_COORD_STATUS, "true");
         services = new Services();
-        setClassesToBeExcluded(services.getConf(), excludedServices);
+        setClassesToBeExcluded(getConfiguration(services), excludedServices);
         services.init();
 
         JPAService jpaService = Services.get().get(JPAService.class);

@@ -41,7 +41,7 @@ public class TestCoordELExtensions extends XDataTestCase {
                 "core/src/test/resources/oozie-site-coordel.xml").getAbsolutePath());
         super.setUp();
         services = new Services();
-        setClassesToBeExcluded(services.getConf(), excludedServices);
+        setClassesToBeExcluded(getConfiguration(services), excludedServices);
         services.init();
     }
 

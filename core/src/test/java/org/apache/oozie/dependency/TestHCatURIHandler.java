@@ -20,6 +20,7 @@ package org.apache.oozie.dependency;
 
 import java.net.URI;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.oozie.service.HCatAccessorService;
 import org.apache.oozie.service.Services;
@@ -39,11 +40,12 @@ public class TestHCatURIHandler extends XHCatTestCase {
     public void setUp() throws Exception {
         super.setUp();
         services = new Services();
-        services.getConf().set(URIHandlerService.URI_HANDLERS,
+        Configuration oozieConfiguration = getConfiguration(services);
+        oozieConfiguration.set(URIHandlerService.URI_HANDLERS,
                 FSURIHandler.class.getName() + "," + HCatURIHandler.class.getName());
-        services.setService(HCatAccessorService.class);
         services.init();
-        conf = createJobConf();
+        services.setService(HCatAccessorService.class);
+        this.conf = createJobConf();
         uriService = Services.get().get(URIHandlerService.class);
     }
 

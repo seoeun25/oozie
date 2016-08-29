@@ -275,7 +275,7 @@ public class TestBundleStartXCommand extends XDataTestCase {
         services = new Services();
         String excludeServices[] = { "org.apache.oozie.service.UUIDService",
                 "org.apache.oozie.service.StatusTransitService" };
-        Configuration conf = services.getConf();
+        Configuration conf = getConfiguration(services);
         setClassesToBeExcluded(conf, excludeServices);
         conf.set(Services.CONF_SERVICE_CLASSES,
                 conf.get(Services.CONF_SERVICE_CLASSES) + "," + DummyUUIDService.class.getName());

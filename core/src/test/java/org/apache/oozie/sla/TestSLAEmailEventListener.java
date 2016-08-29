@@ -28,8 +28,6 @@ import org.apache.oozie.client.event.JobEvent;
 import org.apache.oozie.client.event.SLAEvent;
 import org.apache.oozie.client.event.SLAEvent.EventStatus;
 import org.apache.oozie.service.Services;
-import org.apache.oozie.sla.SLACalcStatus;
-import org.apache.oozie.sla.SLARegistrationBean;
 import org.apache.oozie.test.XTestCase;
 import org.apache.oozie.util.DateUtils;
 import org.junit.After;
@@ -58,7 +56,7 @@ public class TestSLAEmailEventListener extends XTestCase {
     protected void setUp() throws Exception {
         super.setUp();
         services = new Services();
-        conf = services.getConf();
+        conf = getConfiguration(services);
         conf.set(EmailActionExecutor.EMAIL_SMTP_HOST, "localhost");
         conf.set(EmailActionExecutor.EMAIL_SMTP_PORT, String.valueOf(SMTP_TEST_PORT));
         conf.set(EmailActionExecutor.EMAIL_SMTP_AUTH, "false");

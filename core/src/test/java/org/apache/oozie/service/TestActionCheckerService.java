@@ -42,8 +42,6 @@ import org.apache.oozie.DagEngine;
 import org.apache.oozie.ForTestingActionExecutor;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.service.ActionCheckerService.ActionCheckRunnable;
-import org.apache.oozie.service.Services;
-import org.apache.oozie.service.ActionService;
 import org.apache.oozie.test.XDataTestCase;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.IOUtils;
@@ -66,7 +64,7 @@ public class TestActionCheckerService extends XDataTestCase {
         super.setUp();
         setSystemProperty(SchemaService.WF_CONF_EXT_SCHEMAS, "wf-ext-schema.xsd");
         services = new Services();
-        setClassesToBeExcluded(services.getConf(), excludedServices);
+        setClassesToBeExcluded(getConfiguration(services), excludedServices);
         services.init();
         services.get(ActionService.class).registerAndInitExecutor(ForTestingActionExecutor.class);
     }
