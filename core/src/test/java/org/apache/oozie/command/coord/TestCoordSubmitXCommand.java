@@ -63,11 +63,10 @@ public class TestCoordSubmitXCommand extends XDataTestCase {
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        services = new Services();
-        Configuration conf = getConfiguration(services);
-        conf.set(Services.CONF_SERVICE_EXT_CLASSES,
-                EventHandlerService.class.getName() + "," + SLAService.class.getName());
-        services.init();
+        services = initNewServices(keyValueToProperties(
+                Services.CONF_SERVICE_EXT_CLASSES,
+                EventHandlerService.class.getName() + "," + SLAService.class.getName()
+        ));
     }
 
     @Override

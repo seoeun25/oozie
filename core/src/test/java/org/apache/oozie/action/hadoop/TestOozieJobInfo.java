@@ -57,6 +57,7 @@ import org.apache.oozie.executor.jpa.WorkflowActionsGetForJobJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobsGetFromCoordParentIdJPAExecutor;
 import org.apache.oozie.executor.jpa.BundleActionQueryExecutor.BundleActionQuery;
+import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
@@ -74,8 +75,7 @@ public class TestOozieJobInfo extends XDataTestCase {
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        services = new Services();
-        services.init();
+        services = initNewServices();
     }
 
     @Override
@@ -86,7 +86,7 @@ public class TestOozieJobInfo extends XDataTestCase {
 
     public void testInfoWithBundle() throws Exception {
 
-        getConfiguration(services).setBoolean(OozieJobInfo.CONF_JOB_INFO, true);
+        ConfigurationService.setBoolean(OozieJobInfo.CONF_JOB_INFO, true);
         OozieJobInfo.setJobInfo(true);
         BundleJobBean job = this.addRecordToBundleJobTable(Job.Status.PREP, false);
         final JPAService jpaService = Services.get().get(JPAService.class);

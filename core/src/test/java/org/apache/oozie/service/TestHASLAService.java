@@ -97,7 +97,7 @@ public class TestHASLAService extends ZKXTestCase {
             EventHandlerService dummyEhs = new EventHandlerService();
             dummyCalc.setEventHandlerService(dummyEhs);
             dummyEhs.init(Services.get());
-            dummyCalc.init(getConfiguration(Services.get()));
+            dummyCalc.init(Services.get().get(ConfigurationService.class).getConf());
 
             // Case 1 workflow job submitted to dummy server,
             // but before start running, the dummy server is down
@@ -206,7 +206,7 @@ public class TestHASLAService extends ZKXTestCase {
 
         SLAService slas = Services.get().get(SLAService.class);
         SLACalculatorMemory slaCalcMem = (SLACalculatorMemory) slas.getSLACalculator();
-        slaCalcMem.init(getConfiguration(Services.get()));
+        slaCalcMem.init(Services.get().get(ConfigurationService.class).getConf());
         List<String> slaMapKeys = new ArrayList<String>();
         Iterator<String> itr = slaCalcMem.iterator();
         while (itr.hasNext()) {
@@ -334,7 +334,7 @@ public class TestHASLAService extends ZKXTestCase {
 
         SLAService slas = Services.get().get(SLAService.class);
         SLACalculatorMemory slaCalcMem = (SLACalculatorMemory) slas.getSLACalculator();
-        slaCalcMem.init(getConfiguration(Services.get())); // loads the job in sla map
+        slaCalcMem.init(Services.get().get(ConfigurationService.class).getConf()); // loads the job in sla map
 
 
         EventHandlerService ehs = Services.get().get(EventHandlerService.class);
@@ -345,7 +345,7 @@ public class TestHASLAService extends ZKXTestCase {
             // start another dummy oozie instance (dummy sla and event handler services)
             dummyOozie_1 = new DummyZKOozie("a", "http://blah");
             DummySLACalculatorMemory dummySlaCalcMem = new DummySLACalculatorMemory();
-            dummySlaCalcMem.init(getConfiguration(Services.get()));
+            dummySlaCalcMem.init(Services.get().get(ConfigurationService.class).getConf());
             EventHandlerService dummyEhs = new EventHandlerService();
             dummySlaCalcMem.setEventHandlerService(dummyEhs);
             dummyEhs.init(Services.get());

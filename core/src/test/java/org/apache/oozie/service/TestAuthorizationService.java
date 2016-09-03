@@ -79,7 +79,7 @@ public class TestAuthorizationService extends XDataTestCase {
         setSystemProperty(SchemaService.WF_CONF_EXT_SCHEMAS, "wf-ext-schema.xsd");
 
         services = new Services();
-        Configuration conf = getConfiguration(services);
+        Configuration conf = services.get(ConfigurationService.class).getConf();
         if (useAdminUsersFile) {
             Reader adminListReader = IOUtils.getResourceAsReader("adminusers.txt", -1);
             Writer adminListWriter = new FileWriter(new File(getTestCaseConfDir(), "adminusers.txt"));

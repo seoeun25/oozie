@@ -48,7 +48,7 @@ public class TestHAPartitionDependencyManagerService extends ZKXTestCase {
     protected void setUp() throws Exception {
         super.setUp();
         services = super.setupServicesForHCatalog(Services.get());
-        Configuration conf = getConfiguration(services);
+        Configuration conf = services.get(ConfigurationService.class).getConf();
         // disable recovery service
         conf.setInt(RecoveryService.CONF_SERVICE_INTERVAL, 1000000);
         // disable regular cache purge

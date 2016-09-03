@@ -22,6 +22,7 @@ import com.google.gson.Gson;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.oozie.cli.CLIParser;
+import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.store.StoreException;
@@ -85,8 +86,8 @@ public class OozieDBExportCLI {
             CLIParser.Command command = parser.parse(args);
             if (command.getName().equals(EXPORT_CMD)) {
                 Services services = new Services();
-                services.getConf().set(Services.CONF_SERVICE_CLASSES, JPAService.class.getName());
-                services.getConf().set(Services.CONF_SERVICE_EXT_CLASSES, "");
+                services.get(ConfigurationService.class).set(Services.CONF_SERVICE_CLASSES, JPAService.class.getName());
+                services.get(ConfigurationService.class).set(Services.CONF_SERVICE_EXT_CLASSES, "");
                 services.init();
                 queryAllDBTables(command.getCommandLine().getArgs()[0]);
             } else if (command.getName().equals(HELP_CMD)) {

@@ -30,6 +30,7 @@ import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Properties;
 import java.util.regex.Matcher;
 
 import org.apache.hadoop.conf.Configuration;
@@ -75,8 +76,10 @@ import org.apache.oozie.executor.jpa.WorkflowJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor.WorkflowJobQuery;
+import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.LiteWorkflowStoreService;
+import org.apache.oozie.service.ServiceException;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.UUIDService;
 import org.apache.oozie.service.UUIDService.ApplicationType;
@@ -1630,6 +1633,20 @@ public abstract class XDataTestCase extends XHCatTestCase {
             }
         }
         conf.set(Services.CONF_SERVICE_CLASSES, new String(builder));
+    }
+
+    protected Services initNewServices(String[] excludeServices) throws ServiceException{
+        Services services = new Services();
+        setClassesToBeExcluded(services.get(ConfigurationService.class).getConf(), excludeServices);
+        services.init();
+        return services;
+    }
+
+    protected Services initNewServices(Properties configuration, String[] excludeServices) throws ServiceException {
+        Services services = initNewServices(configuration);
+        setClassesToBeExcluded(services.get(ConfigurationService.class).getConf(), excludeServices);
+        services.init();
+        return services;
     }
 
    /**

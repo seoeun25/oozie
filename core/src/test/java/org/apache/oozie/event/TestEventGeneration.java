@@ -118,13 +118,12 @@ public class TestEventGeneration extends XDataTestCase {
     @Before
     protected void setUp() throws Exception {
         super.setUp();
-        services = new Services();
-        Configuration conf = getConfiguration(services);
-        // The EventHandlerService manipulates the queues in the background, so the actual test results depend on the
-        // circumstances (like the speed of the machine, debugging etc).
-        conf.setInt("oozie.service.EventHandlerService.worker.threads", 0);
-        conf.set(Services.CONF_SERVICE_EXT_CLASSES, "org.apache.oozie.service.EventHandlerService");
-        services.init();
+        services = initNewServices(keyValueToProperties(
+                // The EventHandlerService manipulates the queues in the background, so the actual test results depend on the
+                // circumstances (like the speed of the machine, debugging etc).
+                "oozie.service.EventHandlerService.worker.threads", 0,
+                Services.CONF_SERVICE_EXT_CLASSES, "org.apache.oozie.service.EventHandlerService"
+        ));
         ehs = services.get(EventHandlerService.class);
         queue = ehs.getEventQueue();
         jpaService = services.get(JPAService.class);

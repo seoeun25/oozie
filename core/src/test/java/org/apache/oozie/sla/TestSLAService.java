@@ -60,14 +60,13 @@ public class TestSLAService extends XDataTestCase {
     @Before
     protected void setUp() throws Exception {
         super.setUp();
-        Services services = new Services();
-        Configuration conf = getConfiguration(services);
-        conf.set(Services.CONF_SERVICE_EXT_CLASSES, "org.apache.oozie.service.EventHandlerService,"
-                + "org.apache.oozie.sla.service.SLAService");
-        conf.setClass(EventHandlerService.CONF_LISTENERS, DummySLAEventListener.class, SLAEventListener.class);
-        conf.setLong(SLAService.CONF_JOB_EVENT_LATENCY, 0);
-        conf.setInt(EventHandlerService.CONF_WORKER_THREADS, 0);
-        services.init();
+        Services services = initNewServices(keyValueToProperties(
+                Services.CONF_SERVICE_EXT_CLASSES, "org.apache.oozie.service.EventHandlerService,"
+                        + "org.apache.oozie.sla.service.SLAService",
+                EventHandlerService.CONF_LISTENERS, DummySLAEventListener.class.getName() + "," + SLAEventListener.class.getName(),
+                SLAService.CONF_JOB_EVENT_LATENCY, 0,
+                EventHandlerService.CONF_WORKER_THREADS, 0
+        ));
         output.setLength(0);
     }
 
@@ -86,10 +85,9 @@ public class TestSLAService extends XDataTestCase {
         assertTrue(SLAService.isEnabled());
 
         services.destroy();
-        services = new Services();
-        Configuration conf = getConfiguration(services);
-        conf.set(Services.CONF_SERVICE_EXT_CLASSES, "");
-        services.init();
+        services = initNewServices(keyValueToProperties(
+                Services.CONF_SERVICE_EXT_CLASSES, ""
+        ));
         assertFalse(SLAService.isEnabled());
     }
 

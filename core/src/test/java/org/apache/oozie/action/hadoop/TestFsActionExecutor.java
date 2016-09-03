@@ -280,11 +280,10 @@ public class TestFsActionExecutor extends ActionExecutorTestCase {
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        services = new Services();
-        getConfiguration(services).set(URIHandlerService.URI_HANDLERS,
-                FSURIHandler.class.getName() + "," + HCatURIHandler.class.getName());
+        services = initNewServices(keyValueToProperties(
+                        URIHandlerService.URI_HANDLERS, FSURIHandler.class.getName() + ", " + HCatURIHandler.class.getName())
+        );
         services.setService(HCatAccessorService.class);
-        services.init();
         conf = createJobConf();
         uriService = Services.get().get(URIHandlerService.class);
     }

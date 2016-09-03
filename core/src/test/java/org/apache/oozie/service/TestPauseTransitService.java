@@ -47,9 +47,7 @@ public class TestPauseTransitService extends XDataTestCase {
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        services = new Services();
-        setClassesToBeExcluded(getConfiguration(services), excludedServices);
-        services.init();
+        services = initNewServices(excludedServices);
     }
 
     @Override
@@ -304,9 +302,7 @@ public class TestPauseTransitService extends XDataTestCase {
     public void testPauseCoordinatorForBackwardSupport() throws Exception {
         Services.get().destroy();
         setSystemProperty(StatusTransitService.CONF_BACKWARD_SUPPORT_FOR_COORD_STATUS, "true");
-        services = new Services();
-        setClassesToBeExcluded(getConfiguration(services), excludedServices);
-        services.init();
+        services = initNewServices(excludedServices);
 
         final JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);

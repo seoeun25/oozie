@@ -40,14 +40,13 @@ public class TestDefaultConnectionContext extends XTestCase {
     @Before
     protected void setUp() throws Exception {
         super.setUp();
-        services = new Services();
-        Configuration conf = getConfiguration(services);
-        conf.set(Services.CONF_SERVICE_EXT_CLASSES,
-                JMSAccessorService.class.getName() + "," + JMSTopicService.class.getName());
-        conf.set(JMSJobEventListener.JMS_CONNECTION_PROPERTIES, "java.naming.factory.initial#"
-                + ActiveMQConnFactory + ";" + "java.naming.provider.url#" + localActiveMQBroker
-                + ";connectionFactoryNames#" + "ConnectionFactory");
-        services.init();
+        services = initNewServices(keyValueToProperties(
+                Services.CONF_SERVICE_EXT_CLASSES,
+                JMSAccessorService.class.getName() + "," + JMSTopicService.class.getName(),
+                JMSJobEventListener.JMS_CONNECTION_PROPERTIES, "java.naming.factory.initial#"
+                        + ActiveMQConnFactory + ";" + "java.naming.provider.url#" + localActiveMQBroker
+                        + ";connectionFactoryNames#" + "ConnectionFactory"
+        ));
     }
 
     @After

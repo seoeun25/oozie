@@ -263,10 +263,9 @@ public class TestShellActionExecutor extends ActionExecutorTestCase {
      */
     public void testEnvVar() throws Exception {
         Services.get().destroy();
-        Services services = new Services();
-        Configuration conf = getConfiguration(services);
-        conf.setInt(LauncherMapper.CONF_OOZIE_ACTION_MAX_OUTPUT_DATA, 8 * 1042);
-        services.init();
+        Services services = initNewServices(keyValueToProperties(
+                LauncherMapper.CONF_OOZIE_ACTION_MAX_OUTPUT_DATA, 8 * 1042
+        ));
 
         FileSystem fs = getFileSystem();
         // Create the script file with canned shell command

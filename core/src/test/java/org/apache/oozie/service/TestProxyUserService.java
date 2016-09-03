@@ -30,28 +30,30 @@ import java.util.List;
 public class TestProxyUserService extends XTestCase {
 
     public void testService() throws Exception {
-        Services services = new Services();
-        Configuration conf = getConfiguration(services);
-        conf.set(Services.CONF_SERVICE_CLASSES, StringUtils.join(",",
-                Arrays.asList(GroupsService.class.getName(), ProxyUserService.class.getName())));
-        services.init();
+        Services services = null;
         try {
+            services = initNewServices(keyValueToProperties(
+                    Services.CONF_SERVICE_CLASSES, StringUtils.join(",",
+                            Arrays.asList(GroupsService.class.getName(), ProxyUserService.class.getName()))
+            ));
             ProxyUserService proxyUser = services.get(ProxyUserService.class);
             Assert.assertNotNull(proxyUser);
         }
         finally {
-            services.destroy();
+            if (services != null) {
+                services.destroy();
+            }
         }
     }
 
     public void testWrongConfigGroups() throws Exception {
-        Services services = new Services();
-        Configuration conf = getConfiguration(services);
-        conf.set(Services.CONF_SERVICE_CLASSES, StringUtils.join(",", Arrays.asList(GroupsService.class.getName(),
-                                                                                    ProxyUserService.class.getName())));
-        conf.set("oozie.service.ProxyUserService.proxyuser.foo.hosts", "*");
+        Services services = null;
         try {
-            services.init();
+            services = initNewServices(keyValueToProperties(
+                    Services.CONF_SERVICE_CLASSES, StringUtils.join(",", Arrays.asList(GroupsService.class.getName(),
+                            ProxyUserService.class.getName())),
+                    "oozie.service.ProxyUserService.proxyuser.foo.hosts", "*"
+            ));
             fail();
         }
         catch (ServiceException ex) {
@@ -60,15 +62,41 @@ public class TestProxyUserService extends XTestCase {
             fail();
         }
         finally {
-            services.destroy();
+            if (services != null) {
+                services.destroy();
+            }
         }
     }
+
+//    public void testWrongHost() throws Exception {
+//        Services services = null;
+//        try {
+//            services = initNewServices(keyValueToProperties(
+//                    Services.CONF_SERVICE_CLASSES, StringUtils.join(",", Arrays.asList(GroupsService.class.getName(),
+//                            ProxyUserService.class.getName())),
+//                    "oozie.service.ProxyUserService.proxyuser.foo.hosts", "otherhost",
+//                    "oozie.service.ProxyUserService.proxyuser.foo.groups", "*"
+//
+//            ));
+//            fail();
+//        }
+//        catch (ServiceException ex) {
+//        }
+//        catch (Exception ex) {
+//            fail();
+//        }
+//        finally {
+//            if (services != null) {
+//                services.destroy();
+//            }
+//        }
+//    }
 
     public void testWrongHost() throws Exception {
         Services services = new Services();
         Configuration conf = getConfiguration(services);
         conf.set(Services.CONF_SERVICE_CLASSES, StringUtils.join(",", Arrays.asList(GroupsService.class.getName(),
-                                                                                    ProxyUserService.class.getName())));
+                ProxyUserService.class.getName())));
         conf.set("oozie.service.ProxyUserService.proxyuser.foo.hosts", "otherhost");
         conf.set("oozie.service.ProxyUserService.proxyuser.foo.groups", "*");
         try {
@@ -76,6 +104,7 @@ public class TestProxyUserService extends XTestCase {
             fail();
         }
         catch (ServiceException ex) {
+            ex.printStackTrace();
         }
         catch (Exception ex) {
             fail();
@@ -86,13 +115,14 @@ public class TestProxyUserService extends XTestCase {
     }
 
     public void testWrongConfigHosts() throws Exception {
-        Services services = new Services();
-        Configuration conf = getConfiguration(services);
-        conf.set(Services.CONF_SERVICE_CLASSES, StringUtils.join(",", Arrays.asList(GroupsService.class.getName(),
-                                                                                    ProxyUserService.class.getName())));
-        conf.set("oozie.service.ProxyUserService.proxyuser.foo.groups", "*");
+        Services services = null;
         try {
-            services.init();
+            services = initNewServices(keyValueToProperties(
+                    Services.CONF_SERVICE_CLASSES, StringUtils.join(",", Arrays.asList(GroupsService.class.getName(),
+                            ProxyUserService.class.getName())),
+                    "oozie.service.ProxyUserService.proxyuser.foo.groups", "*"
+
+            ));
             fail();
         }
         catch (ServiceException ex) {
@@ -101,37 +131,41 @@ public class TestProxyUserService extends XTestCase {
             fail();
         }
         finally {
-            services.destroy();
+            if (services != null) {
+                services.destroy();
+            }
         }
     }
 
     public void testValidateAnyHostAnyUser() throws Exception {
-        Services services = new Services();
-        Configuration conf = getConfiguration(services);
-        conf.set(Services.CONF_SERVICE_CLASSES, StringUtils.join(",", Arrays.asList(GroupsService.class.getName(),
-                                                                                    ProxyUserService.class.getName())));
-        conf.set("oozie.service.ProxyUserService.proxyuser.foo.hosts", "*");
-        conf.set("oozie.service.ProxyUserService.proxyuser.foo.groups", "*");
-        services.init();
+        Services services = null;
         try {
+            services = initNewServices(keyValueToProperties(
+                    Services.CONF_SERVICE_CLASSES, StringUtils.join(",", Arrays.asList(GroupsService.class.getName(),
+                            ProxyUserService.class.getName())),
+                    "oozie.service.ProxyUserService.proxyuser.foo.hosts", "*",
+                    "oozie.service.ProxyUserService.proxyuser.foo.groups", "*"
+            ));
             ProxyUserService proxyUser = services.get(ProxyUserService.class);
             Assert.assertNotNull(proxyUser);
             proxyUser.validate("foo", "localhost", "bar");
         }
         finally {
-            services.destroy();
+            if (services != null) {
+                services.destroy();
+            }
         }
     }
 
     public void testInvalidProxyUser() throws Exception {
-        Services services = new Services();
-        Configuration conf = getConfiguration(services);
-        conf.set(Services.CONF_SERVICE_CLASSES, StringUtils.join(",", Arrays.asList(GroupsService.class.getName(),
-                                                                                    ProxyUserService.class.getName())));
-        conf.set("oozie.service.ProxyUserService.proxyuser.foo.hosts", "*");
-        conf.set("oozie.service.ProxyUserService.proxyuser.foo.groups", "*");
-        services.init();
+        Services services = null;
         try {
+            services = initNewServices(keyValueToProperties(
+                    Services.CONF_SERVICE_CLASSES, StringUtils.join(",", Arrays.asList(GroupsService.class.getName(),
+                            ProxyUserService.class.getName())),
+                    "oozie.service.ProxyUserService.proxyuser.foo.hosts", "*",
+                    "oozie.service.ProxyUserService.proxyuser.foo.groups", "*"
+            ));
             ProxyUserService proxyUser = services.get(ProxyUserService.class);
             Assert.assertNotNull(proxyUser);
             proxyUser.validate("bar", "localhost", "foo");
@@ -143,35 +177,37 @@ public class TestProxyUserService extends XTestCase {
             fail(ex.toString());
         }
         finally {
-            services.destroy();
+            if (services != null) {
+                services.destroy();
+            }
         }
     }
 
     public void testValidateHost() throws Exception {
-        Services services = new Services();
-        Configuration conf = getConfiguration(services);
-        conf.set(Services.CONF_SERVICE_CLASSES, StringUtils.join(",", Arrays.asList(GroupsService.class.getName(),
-                                                                                    ProxyUserService.class.getName())));
-        conf.set("oozie.service.ProxyUserService.proxyuser.foo.hosts", "localhost");
-        conf.set("oozie.service.ProxyUserService.proxyuser.foo.groups", "*");
-        services.init();
+        Services services = null;
         try {
+            services = initNewServices(keyValueToProperties(
+                    Services.CONF_SERVICE_CLASSES, StringUtils.join(",", Arrays.asList(GroupsService.class.getName(),
+                            ProxyUserService.class.getName())),
+                    "oozie.service.ProxyUserService.proxyuser.foo.hosts", "localhost",
+                    "oozie.service.ProxyUserService.proxyuser.foo.groups", "*"
+            ));
             ProxyUserService proxyUser = services.get(ProxyUserService.class);
             Assert.assertNotNull(proxyUser);
             proxyUser.validate("foo", "localhost", "bar");
         }
         finally {
-            services.destroy();
+            if (services != null) {
+                services.destroy();
+            }
         }
     }
 
     private String getGroup() throws Exception {
-        Services services = new Services();
-        Configuration conf = getConfiguration(services);
-        conf.set(Services.CONF_SERVICE_CLASSES, StringUtils.join(",",
-                Arrays.asList(GroupsService.class.getName())));
-        conf.set("server.services", StringUtils.join(",", Arrays.asList(GroupsService.class.getName())));
-        services.init();
+        Services services = initNewServices(keyValueToProperties(
+                Services.CONF_SERVICE_CLASSES, StringUtils.join(",", Arrays.asList(GroupsService.class.getName())),
+                "server.services", StringUtils.join(",", Arrays.asList(GroupsService.class.getName()))
+        ));
         GroupsService groups = services.get(GroupsService.class);
         List<String> g = groups.getGroups(System.getProperty("user.name"));
         services.destroy();
@@ -179,33 +215,35 @@ public class TestProxyUserService extends XTestCase {
     }
 
     public void testValidateGroup() throws Exception {
-        Services services = new Services();
-        Configuration conf = getConfiguration(services);
-        conf.set(Services.CONF_SERVICE_CLASSES, StringUtils.join(",", Arrays.asList(GroupsService.class.getName(),
-                                                                                    ProxyUserService.class.getName())));
-        conf.set("oozie.service.ProxyUserService.proxyuser.foo.hosts", "*");
-        conf.set("oozie.service.ProxyUserService.proxyuser.foo.groups", getGroup());
-        services.init();
+        Services services = null;
         try {
+            services = initNewServices(keyValueToProperties(
+                    Services.CONF_SERVICE_CLASSES, StringUtils.join(",", Arrays.asList(GroupsService.class.getName(),
+                            ProxyUserService.class.getName())),
+                    "oozie.service.ProxyUserService.proxyuser.foo.hosts", "*",
+                    "oozie.service.ProxyUserService.proxyuser.foo.groups", getGroup()
+            ));
             ProxyUserService proxyUser = services.get(ProxyUserService.class);
             Assert.assertNotNull(proxyUser);
             proxyUser.validate("foo", "localhost", System.getProperty("user.name"));
         }
         finally {
-            services.destroy();
+            if (services != null) {
+                services.destroy();
+            }
         }
     }
 
 
     public void testUnknownHost() throws Exception {
-        Services services = new Services();
-        Configuration conf = getConfiguration(services);
-        conf.set(Services.CONF_SERVICE_CLASSES, StringUtils.join(",", Arrays.asList(GroupsService.class.getName(),
-                                                                                    ProxyUserService.class.getName())));
-        conf.set("oozie.service.ProxyUserService.proxyuser.foo.hosts", "localhost");
-        conf.set("oozie.service.ProxyUserService.proxyuser.foo.groups", "*");
-        services.init();
+        Services services = null;
         try {
+            services = initNewServices(keyValueToProperties(
+                    Services.CONF_SERVICE_CLASSES, StringUtils.join(",", Arrays.asList(GroupsService.class.getName(),
+                            ProxyUserService.class.getName())),
+                    "oozie.service.ProxyUserService.proxyuser.foo.hosts", "localhost",
+                    "oozie.service.ProxyUserService.proxyuser.foo.groups", "*"
+            ));
             ProxyUserService proxyUser = services.get(ProxyUserService.class);
             Assert.assertNotNull(proxyUser);
             proxyUser.validate("foo", "unknownhost.bar.foo", "bar");
@@ -218,19 +256,21 @@ public class TestProxyUserService extends XTestCase {
             fail(ex.toString());
         }
         finally {
-            services.destroy();
+            if (services != null) {
+                services.destroy();
+            }
         }
     }
 
     public void testInvalidHost() throws Exception {
-        Services services = new Services();
-        Configuration conf = getConfiguration(services);
-        conf.set(Services.CONF_SERVICE_CLASSES, StringUtils.join(",", Arrays.asList(GroupsService.class.getName(),
-                                                                                    ProxyUserService.class.getName())));
-        conf.set("oozie.service.ProxyUserService.proxyuser.foo.hosts", "localhost");
-        conf.set("oozie.service.ProxyUserService.proxyuser.foo.groups", "*");
-        services.init();
+        Services services = null;
         try {
+            services = initNewServices(keyValueToProperties(
+                    Services.CONF_SERVICE_CLASSES, StringUtils.join(",", Arrays.asList(GroupsService.class.getName(),
+                            ProxyUserService.class.getName())),
+                    "oozie.service.ProxyUserService.proxyuser.foo.hosts", "localhost",
+                    "oozie.service.ProxyUserService.proxyuser.foo.groups", "*"
+            ));
             ProxyUserService proxyUser = services.get(ProxyUserService.class);
             Assert.assertNotNull(proxyUser);
             proxyUser.validate("foo", "www.example.com", "bar");
@@ -243,19 +283,21 @@ public class TestProxyUserService extends XTestCase {
             fail(ex.toString());
         }
         finally {
-            services.destroy();
+            if (services != null) {
+                services.destroy();
+            }
         }
     }
 
     public void testInvalidGroup() throws Exception {
-        Services services = new Services();
-        Configuration conf = getConfiguration(services);
-        conf.set(Services.CONF_SERVICE_CLASSES, StringUtils.join(",", Arrays.asList(GroupsService.class.getName(),
-                                                                                    ProxyUserService.class.getName())));
-        conf.set("oozie.service.ProxyUserService.proxyuser.foo.hosts", "localhost");
-        conf.set("oozie.service.ProxyUserService.proxyuser.foo.groups", "nobody");
-        services.init();
+        Services services = null;
         try {
+            services = initNewServices(keyValueToProperties(
+                    Services.CONF_SERVICE_CLASSES, StringUtils.join(",", Arrays.asList(GroupsService.class.getName(),
+                            ProxyUserService.class.getName())),
+                    "oozie.service.ProxyUserService.proxyuser.foo.hosts", "localhost",
+                    "oozie.service.ProxyUserService.proxyuser.foo.groups", "nobody"
+            ));
             ProxyUserService proxyUser = services.get(ProxyUserService.class);
             Assert.assertNotNull(proxyUser);
             proxyUser.validate("foo", "localhost", System.getProperty("user.name"));
@@ -268,17 +310,19 @@ public class TestProxyUserService extends XTestCase {
             fail(ex.toString());
         }
         finally {
-            services.destroy();
+            if (services != null) {
+                services.destroy();
+            }
         }
     }
 
     public void testNullProxyUser() throws Exception {
-        Services services = new Services();
-        Configuration conf = getConfiguration(services);
-        conf.set(Services.CONF_SERVICE_CLASSES, StringUtils.join(",", Arrays.asList(GroupsService.class.getName(),
-                                                                                    ProxyUserService.class.getName())));
-        services.init();
+        Services services = null;
         try {
+            services = initNewServices(keyValueToProperties(
+                    Services.CONF_SERVICE_CLASSES, StringUtils.join(",", Arrays.asList(GroupsService.class.getName(),
+                            ProxyUserService.class.getName()))
+            ));
             ProxyUserService proxyUser = services.get(ProxyUserService.class);
             Assert.assertNotNull(proxyUser);
             proxyUser.validate(null, "localhost", "bar");
@@ -292,16 +336,19 @@ public class TestProxyUserService extends XTestCase {
             fail(ex.toString());
         }
         finally {
-            services.destroy();
+            if (services != null) {
+                services.destroy();
+            }
         }
     }
 
     public void testNullHost() throws Exception {
-        Services services = new Services();
-        getConfiguration(services).set(Services.CONF_SERVICE_CLASSES, StringUtils.join(",",
-                Arrays.asList(GroupsService.class.getName(), ProxyUserService.class.getName())));
-        services.init();
+        Services services = null;
         try {
+            services = initNewServices(keyValueToProperties(
+                    Services.CONF_SERVICE_CLASSES, StringUtils.join(",",
+                            Arrays.asList(GroupsService.class.getName(), ProxyUserService.class.getName()))
+            ));
             ProxyUserService proxyUser = services.get(ProxyUserService.class);
             Assert.assertNotNull(proxyUser);
             proxyUser.validate("foo", null, "bar");
@@ -315,7 +362,9 @@ public class TestProxyUserService extends XTestCase {
             fail(ex.toString());
         }
         finally {
-            services.destroy();
+            if (services != null) {
+                services.destroy();
+            }
         }
     }
 }

@@ -30,6 +30,7 @@ import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.cli.CLIParser;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
+import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.sla.SLARegistrationBean;
@@ -82,8 +83,8 @@ public class OozieDBImportCLI {
             CLIParser.Command command = parser.parse(args);
             if (command.getName().equals(IMPORT_CMD)) {
                 Services services = new Services();
-                services.getConf().set(Services.CONF_SERVICE_CLASSES, JPAService.class.getName());
-                services.getConf().set(Services.CONF_SERVICE_EXT_CLASSES, "");
+                services.get(ConfigurationService.class).set(Services.CONF_SERVICE_CLASSES, JPAService.class.getName());
+                services.get(ConfigurationService.class).set(Services.CONF_SERVICE_EXT_CLASSES, "");
                 services.init();
                 System.out.println("==========================================================");
                 System.out.println(Arrays.toString(command.getCommandLine().getArgs()));

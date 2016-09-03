@@ -42,11 +42,10 @@ public class TestPartitionDependencyManagerService extends XDataTestCase {
 
     protected void setUp() throws Exception {
         super.setUp();
-        services = super.setupServicesForHCatalog();
         // disable regular cache purge
-        Configuration conf = getConfiguration(services);
-        conf.setInt(PartitionDependencyManagerService.CACHE_PURGE_INTERVAL, 1000000);
-        services.init();
+        services = initServicesForHCatalog(keyValueToProperties(
+                PartitionDependencyManagerService.CACHE_PURGE_INTERVAL, 1000000
+        ));
     }
 
     protected void tearDown() throws Exception {

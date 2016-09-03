@@ -570,8 +570,7 @@ public class TestCoordRerunXCommand extends XDataTestCase {
      */
     public void testCoordRerunCleanupForHCat() throws Exception {
 
-        services = super.setupServicesForHCatalog();
-        services.init();
+        services = initServicesForHCatalog(new Properties());
 
         final String jobId = "0000000-" + new Date().getTime() + "-testCoordRerun-C";
         final int actionNum = 1;

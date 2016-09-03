@@ -24,6 +24,7 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.Properties;
 import java.util.TimeZone;
 
 import org.apache.hadoop.conf.Configuration;
@@ -81,8 +82,7 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
 
     public void testActionMaterForHcatalog() throws Exception {
         Services.get().destroy();
-        Services services = super.setupServicesForHCatalog();
-        services.init();
+        Services services = initServicesForHCatalog(new Properties());
         Date startTime = DateUtils.parseDateOozieTZ("2009-03-06T010:00Z");
         Date endTime = DateUtils.parseDateOozieTZ("2009-03-11T10:00Z");
         CoordinatorJobBean job = addRecordToCoordJobTableForWaiting("coord-job-for-matd-hcat.xml",
@@ -99,8 +99,7 @@ public class TestCoordMaterializeTransitionXCommand extends XDataTestCase {
 
     public void testActionMaterForHcatalogIncorrectURI() throws Exception {
         Services.get().destroy();
-        Services services = super.setupServicesForHCatalog();
-        services.init();
+        Services services = initServicesForHCatalog(new Properties());
         Date startTime = DateUtils.parseDateOozieTZ("2009-03-06T010:00Z");
         Date endTime = DateUtils.parseDateOozieTZ("2009-03-11T10:00Z");
         CoordinatorJobBean job = addRecordToCoordJobTableForWaiting("coord-job-for-matd-neg-hcat.xml",

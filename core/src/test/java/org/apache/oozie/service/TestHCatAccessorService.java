@@ -21,6 +21,7 @@ package org.apache.oozie.service;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.net.URI;
+import java.util.Properties;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataOutputStream;
@@ -35,8 +36,7 @@ public class TestHCatAccessorService extends XHCatTestCase {
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        services = super.setupServicesForHCatalog();
-        services.init();
+        services = initServicesForHCatalog(new Properties());
     }
 
     @Override
@@ -50,16 +50,15 @@ public class TestHCatAccessorService extends XHCatTestCase {
     @Test
     public void testGetJMSConnectionInfoNoDefault() throws Exception {
         services.destroy();
-        services = super.setupServicesForHCatalog();
-        Configuration conf = getConfiguration(services);
         String server2 = "hcat://${1}.${2}.server.com:8020=java.naming.factory.initial#Dummy.Factory;" +
                 "java.naming.provider.url#tcp://broker.${2}:61616";
         String server3 = "hcat://xyz.corp.dummy.com=java.naming.factory.initial#Dummy.Factory;" +
                 "java.naming.provider.url#tcp:localhost:61616";
 
         String jmsConnectionURL = server2 + "," + server3;
-        conf.set(HCatAccessorService.JMS_CONNECTIONS_PROPERTIES, jmsConnectionURL);
-        services.init();
+        services = initServicesForHCatalog(keyValueToProperties(
+                HCatAccessorService.JMS_CONNECTIONS_PROPERTIES, jmsConnectionURL
+        ));
 
         HCatAccessorService hcatService = services.get(HCatAccessorService.class);
         // No default JMS mapping
@@ -76,8 +75,6 @@ public class TestHCatAccessorService extends XHCatTestCase {
     @Test
     public void testGetJMSConnectionInfo() throws Exception {
         services.destroy();
-        services = super.setupServicesForHCatalog();
-        Configuration conf = getConfiguration(services);
         String server1 = "default=java.naming.factory.initial#org.apache.activemq.jndi.ActiveMQInitialContextFactory;" +
                 "java.naming.provider.url#vm://localhost?broker.persistent=false";
         String server2 = "hcat://${1}.${2}.server.com:8020=java.naming.factory.initial#Dummy.Factory;" +
@@ -86,8 +83,9 @@ public class TestHCatAccessorService extends XHCatTestCase {
                 "java.naming.provider.url#tcp:localhost:61616";
 
         String jmsConnectionURL = server1 + "," + server2 + "," + server3;
-        conf.set(HCatAccessorService.JMS_CONNECTIONS_PROPERTIES, jmsConnectionURL);
-        services.init();
+        services = initServicesForHCatalog(keyValueToProperties(
+                HCatAccessorService.JMS_CONNECTIONS_PROPERTIES, jmsConnectionURL
+        ));
 
         HCatAccessorService hcatService = services.get(HCatAccessorService.class);
         JMSConnectionInfo connInfo = hcatService.getJMSConnectionInfo(new URI("hcat://hcatserver.blue.server.com:8020"));
@@ -118,10 +116,9 @@ public class TestHCatAccessorService extends XHCatTestCase {
         hcatConf.writeXml(new FileOutputStream(hcatConfFile));
         assertTrue(hcatConfFile.exists());
         services.destroy();
-        services = super.setupServicesForHCatalog();
-        Configuration conf = getConfiguration(services);
-        conf.set("oozie.service.HCatAccessorService.hcat.configuration", hcatConfFile.getAbsolutePath());
-        services.init();
+        services = initServicesForHCatalog(keyValueToProperties(
+                "oozie.service.HCatAccessorService.hcat.configuration", hcatConfFile.getAbsolutePath()
+        ));
         Configuration hcatConfLoaded = services.get(HCatAccessorService.class).getHCatConf();
         assertEquals("a", hcatConfLoaded.get("A"));
     }
@@ -139,10 +136,9 @@ public class TestHCatAccessorService extends XHCatTestCase {
         out.close();
         assertTrue(getFileSystem().exists(hcatConfPath));
         services.destroy();
-        services = super.setupServicesForHCatalog();
-        Configuration conf = getConfiguration(services);
-        conf.set("oozie.service.HCatAccessorService.hcat.configuration", hcatConfPath.toUri().toString());
-        services.init();
+        services = initServicesForHCatalog(keyValueToProperties(
+                "oozie.service.HCatAccessorService.hcat.configuration", hcatConfPath.toUri().toString()
+        ));
         Configuration hcatConfLoaded = services.get(HCatAccessorService.class).getHCatConf();
         assertEquals("a", hcatConfLoaded.get("A"));
     }

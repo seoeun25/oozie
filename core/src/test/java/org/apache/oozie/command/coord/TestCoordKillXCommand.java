@@ -21,6 +21,7 @@ package org.apache.oozie.command.coord;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.Properties;
 
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
@@ -55,9 +56,7 @@ public class TestCoordKillXCommand extends XDataTestCase {
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        services = new Services();
-        setClassesToBeExcluded(getConfiguration(services), excludedServices);
-        services.init();
+        services = initNewServices(excludedServices);
     }
 
     @Override
@@ -192,9 +191,7 @@ public class TestCoordKillXCommand extends XDataTestCase {
     public void testCoordKillForBackwardSupport() throws Exception {
         Services.get().destroy();
         setSystemProperty(StatusTransitService.CONF_BACKWARD_SUPPORT_FOR_COORD_STATUS, "true");
-        services = new Services();
-        setClassesToBeExcluded(getConfiguration(services), excludedServices);
-        services.init();
+        services = initNewServices(excludedServices);
 
         JPAService jpaService = Services.get().get(JPAService.class);
         assertNotNull(jpaService);
@@ -369,8 +366,7 @@ public class TestCoordKillXCommand extends XDataTestCase {
     public void testCoordKillRemovePushMissingDeps() throws Exception {
         try {
             services.destroy();
-            services = super.setupServicesForHCatalog();
-            services.init();
+            services = initServicesForHCatalog(new Properties());
             String db = "default";
             String table = "tablename";
             String server = "hcatserver";

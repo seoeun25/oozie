@@ -25,6 +25,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.test.XTestCase;
 import org.junit.After;
@@ -39,10 +40,9 @@ public class TestCodecFactory extends XTestCase {
     @Before
     protected void setUp() throws Exception {
         super.setUp();
-        services = new Services();
-        Configuration conf = getConfiguration(services);
-        conf.set(CodecFactory.COMPRESSION_OUTPUT_CODEC, GzipCompressionCodec.CODEC_NAME);
-        services.init();
+        services = initNewServices(keyValueToProperties(
+                CodecFactory.COMPRESSION_OUTPUT_CODEC, GzipCompressionCodec.CODEC_NAME
+        ));
     }
 
     @Override
@@ -86,7 +86,7 @@ public class TestCodecFactory extends XTestCase {
         daos.writeUTF(GzipCompressionCodec.CODEC_NAME);
         daos.close();
         assertEquals(new String(baos.toByteArray()), new String(CodecFactory.getHeaderBytes()));
-        Configuration conf = getConfiguration(services);
+        Configuration conf = services.get(ConfigurationService.class).getConf();
         conf.set(CodecFactory.COMPRESSION_OUTPUT_CODEC, "none");
         CodecFactory.initialize(conf);
         assertTrue(!CodecFactory.isCompressionEnabled());

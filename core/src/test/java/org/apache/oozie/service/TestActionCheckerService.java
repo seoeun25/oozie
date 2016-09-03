@@ -63,9 +63,7 @@ public class TestActionCheckerService extends XDataTestCase {
     protected void setUp() throws Exception {
         super.setUp();
         setSystemProperty(SchemaService.WF_CONF_EXT_SCHEMAS, "wf-ext-schema.xsd");
-        services = new Services();
-        setClassesToBeExcluded(getConfiguration(services), excludedServices);
-        services.init();
+        services = initNewServices(excludedServices);
         services.get(ActionService.class).registerAndInitExecutor(ForTestingActionExecutor.class);
     }
 

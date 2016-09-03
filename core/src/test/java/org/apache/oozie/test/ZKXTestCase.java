@@ -76,7 +76,7 @@ public abstract class ZKXTestCase extends XDataTestCase {
     protected void setUp(Configuration conf) throws Exception {
         super.setUp();
         Services services = new Services();
-        Configuration oozieConfiguration = getConfiguration(services);
+        Configuration oozieConfiguration = services.get(ConfigurationService.class).getConf();
         if(conf != null && conf.size()>0){
             for (Iterator<Entry<String, String>> itr = (Iterator<Entry<String, String>>) conf.iterator(); itr.hasNext();) {
                 Entry<String, String> entry = itr.next();

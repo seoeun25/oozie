@@ -54,7 +54,7 @@ public class TestJMSSLAEventListener extends XTestCase {
     protected void setUp() throws Exception {
         super.setUp();
         services = new Services();
-        conf = getConfiguration(services);
+        conf = services.get(ConfigurationService.class).getConf();
         conf.set(Services.CONF_SERVICE_EXT_CLASSES,
                 JMSAccessorService.class.getName() + "," + JMSTopicService.class.getName());
         conf.set(JMSJobEventListener.JMS_CONNECTION_PROPERTIES, "java.naming.factory.initial#" + ActiveMQConnFactory

@@ -44,6 +44,7 @@ import org.apache.oozie.client.rest.JsonTags;
 import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.service.AuthorizationService;
 import org.apache.oozie.service.BundleEngineService;
+import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.ForTestAuthorizationService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.ProxyUserService;
@@ -114,7 +115,7 @@ public class TestBulkMonitorWebServiceAPI extends XDataTestCase {
         this.servletPath = servletPath[0];
         try {
             String proxyUser = getTestUser();
-            Configuration conf = getConfiguration(services);
+            Configuration conf = services.get(ConfigurationService.class).getConf();
             conf.set(ProxyUserService.CONF_PREFIX + proxyUser + ProxyUserService.HOSTS, "*");
             conf.set(ProxyUserService.CONF_PREFIX + proxyUser + ProxyUserService.GROUPS, "*");
             services.init();

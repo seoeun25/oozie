@@ -19,6 +19,7 @@
 package org.apache.oozie.util;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.test.XTestCase;
 
@@ -41,7 +42,7 @@ public class TestConfigUtils extends XTestCase {
 
     public void testGetOozieURL() throws Exception {
         // Normally these are set by a shell script, but not when run from unit tests, so just put some standard values here
-        Configuration conf = getConfiguration(services);
+        Configuration conf = services.get(ConfigurationService.class).getConf();
         conf.set("oozie.http.hostname", "localhost");
         conf.set("oozie.http.port", "11000");
         conf.set("oozie.https.port", "11443");

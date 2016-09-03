@@ -484,11 +484,10 @@ public class TestRecoveryService extends XDataTestCase {
 
     public void testCoordActionRecoveryServiceForWaitingRegisterPartition() throws Exception {
         services.destroy();
-        services = super.setupServicesForHCatalog();
-        getConfiguration(services).set(URIHandlerService.URI_HANDLERS,
-                FSURIHandler.class.getName() + "," + HCatURIHandler.class.getName());
-        getConfiguration(services).setLong(RecoveryService.CONF_PUSH_DEPENDENCY_INTERVAL, 1);
-        services.init();
+        services = initServicesForHCatalog(keyValueToProperties(
+                URIHandlerService.URI_HANDLERS, FSURIHandler.class.getName() + "," + HCatURIHandler.class.getName(),
+                RecoveryService.CONF_PUSH_DEPENDENCY_INTERVAL, 1
+        ));
 
         String db = "default";
         String table = "tablename";

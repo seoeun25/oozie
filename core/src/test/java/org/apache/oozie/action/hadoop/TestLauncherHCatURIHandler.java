@@ -43,11 +43,10 @@ public class TestLauncherHCatURIHandler extends XHCatTestCase {
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        services = new Services();
-        Configuration oozieConfiguration = getConfiguration(services);
-        oozieConfiguration.set(URIHandlerService.URI_HANDLERS,
-                FSURIHandler.class.getName() + "," + HCatURIHandler.class.getName());
-        services.init();
+        services = initNewServices(keyValueToProperties(
+                URIHandlerService.URI_HANDLERS,
+                FSURIHandler.class.getName() + "," + HCatURIHandler.class.getName()
+        ));
         services.setService(HCatAccessorService.class);
         conf = createJobConf();
         uriService = Services.get().get(URIHandlerService.class);

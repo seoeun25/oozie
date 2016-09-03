@@ -41,8 +41,7 @@ public class TestWorkflowKillXCommand extends XDataTestCase {
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        services = new Services();
-        services.init();
+        services = initNewServices();
     }
 
     @Override
@@ -122,8 +121,7 @@ public class TestWorkflowKillXCommand extends XDataTestCase {
         services.destroy();
 
         setSystemProperty(LiteWorkflowStoreService.CONF_NODE_DEF_VERSION, LiteWorkflowStoreService.NODE_DEF_VERSION_0);
-        services = new Services();
-        services.init();
+        services = initNewServices();
 
         WorkflowJobBean job = this.addRecordToWfJobTable(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
         WorkflowActionBean action = this.addRecordToWfActionTable(job.getId(), "1", WorkflowAction.Status.PREP);
@@ -145,8 +143,7 @@ public class TestWorkflowKillXCommand extends XDataTestCase {
         sleep(5000);
 
         setSystemProperty(LiteWorkflowStoreService.CONF_NODE_DEF_VERSION, LiteWorkflowStoreService.NODE_DEF_VERSION_1);
-        services = new Services();
-        services.init();
+        services = initNewServices();
 
         sleep(5000);
 
@@ -165,8 +162,7 @@ public class TestWorkflowKillXCommand extends XDataTestCase {
         sleep(5000);
 
         setSystemProperty(LiteWorkflowStoreService.CONF_NODE_DEF_VERSION, LiteWorkflowStoreService.NODE_DEF_VERSION_2);
-        services = new Services();
-        services.init();
+        services = initNewServices();
 
         sleep(5000);
 
@@ -184,8 +180,7 @@ public class TestWorkflowKillXCommand extends XDataTestCase {
     public void testChildId() throws Exception {
         services.destroy();
         setSystemProperty(UUIDService.CONF_GENERATOR, "counter");
-        services = new Services();
-        services.init();
+        services = initNewServices();
         UUIDService uuid = services.get(UUIDService.class);
         String id = uuid.generateId(ApplicationType.WORKFLOW);
         String childId = uuid.generateChildId(id, "a");
@@ -194,8 +189,7 @@ public class TestWorkflowKillXCommand extends XDataTestCase {
         services.destroy();
 
         setSystemProperty(UUIDService.CONF_GENERATOR, "random");
-        services = new Services();
-        services.init();
+        services = initNewServices();
         uuid = services.get(UUIDService.class);
         id = uuid.generateId(ApplicationType.WORKFLOW);
         childId = uuid.generateChildId(id, "a");

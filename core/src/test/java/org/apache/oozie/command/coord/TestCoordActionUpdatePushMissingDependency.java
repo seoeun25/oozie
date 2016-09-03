@@ -19,6 +19,8 @@
 package org.apache.oozie.command.coord;
 
 import java.util.Collection;
+import java.util.Properties;
+
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.coord.CoordELFunctions;
@@ -39,8 +41,7 @@ public class TestCoordActionUpdatePushMissingDependency extends XDataTestCase {
     @Before
     protected void setUp() throws Exception {
         super.setUp();
-        services = super.setupServicesForHCatalog();
-        services.init();
+        services = initServicesForHCatalog(new Properties());
     }
 
     @After

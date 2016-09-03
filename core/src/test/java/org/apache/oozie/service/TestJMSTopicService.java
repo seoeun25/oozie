@@ -56,9 +56,9 @@ public class TestJMSTopicService extends XDataTestCase {
     }
 
     private Services setupServicesForTopic() throws ServiceException {
-        Services services = new Services();
-        Configuration conf = getConfiguration(services);
-        conf.set(Services.CONF_SERVICE_EXT_CLASSES, JMSTopicService.class.getName());
+        Services services = initNewServices(keyValueToProperties(
+                Services.CONF_SERVICE_EXT_CLASSES, JMSTopicService.class.getName()
+        ));
         return services;
     }
 

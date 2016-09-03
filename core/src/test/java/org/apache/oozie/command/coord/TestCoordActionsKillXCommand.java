@@ -61,9 +61,7 @@ public class TestCoordActionsKillXCommand extends XDataTestCase {
     protected void setUp() throws Exception {
         super.setUp();
         setSystemProperty(StatusTransitService.CONF_BACKWARD_SUPPORT_FOR_STATES_WITHOUT_ERROR, "false");
-        services = new Services();
-        setClassesToBeExcluded(services.getConf(), new String[] { StatusTransitService.class.getCanonicalName() });
-        services.init();
+        services = initNewServices(new String[]{StatusTransitService.class.getCanonicalName()});
     }
 
     @Override

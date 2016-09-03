@@ -30,6 +30,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.net.UnknownHostException;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -791,7 +792,8 @@ public abstract class XTestCase extends TestCase {
             // we don't want to interfere
             try {
                 Services services = new Services();
-                getConfiguration(services).set(Services.CONF_SERVICE_CLASSES, MINIMAL_SERVICES_FOR_DB_CLEANUP);
+                services.get(ConfigurationService.class).getConf().set(Services.CONF_SERVICE_CLASSES,
+                        MINIMAL_SERVICES_FOR_DB_CLEANUP);
                 services.init();
                 cleanUpDBTablesInternal();
             }
@@ -1154,6 +1156,16 @@ public abstract class XTestCase extends TestCase {
         }
     }
 
+    protected Services initServicesForHCatalog(Properties configuration) throws ServiceException {
+        Services services = new Services();
+        setupServicesForHCataLogImpl(services);
+        for(String key: configuration.stringPropertyNames()) {
+            services.get(ConfigurationService.class).getConf().set(key, configuration.getProperty(key));
+        }
+        services.init();
+        return services;
+    }
+
     protected Services setupServicesForHCatalog() throws ServiceException {
         Services services = new Services();
         setupServicesForHCataLogImpl(services);
@@ -1161,7 +1173,7 @@ public abstract class XTestCase extends TestCase {
     }
 
     private void setupServicesForHCataLogImpl(Services services) {
-        Configuration conf = getConfiguration(services);
+        Configuration conf = services.get(ConfigurationService.class).getConf();
         conf.set(Services.CONF_SERVICE_EXT_CLASSES,
                 JMSAccessorService.class.getName() + "," +
                 PartitionDependencyManagerService.class.getName() + "," +
@@ -1205,6 +1217,32 @@ public abstract class XTestCase extends TestCase {
 
     public TestLogAppender getTestLogAppender() {
         return new TestLogAppender();
+    }
+
+    protected Services initNewServices() throws ServiceException{
+        Services services = new Services();
+        services.init();
+        return services;
+    }
+
+    protected Services initNewServices(Properties configuration) throws ServiceException {
+        Services services = new Services();
+        for(String key: configuration.stringPropertyNames()) {
+            services.get(ConfigurationService.class).getConf().set(key, configuration.getProperty(key));
+        }
+        services.init();
+        return services;
+    }
+
+    protected Properties keyValueToProperties(Object... keyValues) {
+        if ((keyValues.length % 2) != 0) {
+            throw new IllegalArgumentException("Key should be pair with value");
+        }
+        Properties properties = new Properties();
+        for (int i = 0; i < keyValues.length; i += 2) {
+            properties.setProperty(keyValues[i].toString(), keyValues[i + 1].toString());
+        }
+        return properties;
     }
 
 }

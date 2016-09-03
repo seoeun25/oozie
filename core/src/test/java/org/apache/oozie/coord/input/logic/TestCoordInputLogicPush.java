@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Properties;
 import java.util.Set;
 import java.util.TimeZone;
 
@@ -73,8 +74,7 @@ public class TestCoordInputLogicPush extends XHCatTestCase {
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        services = super.setupServicesForHCatalog();
-        services.init();
+        services = super.initServicesForHCatalog(new Properties());
         createTestTable();
         server = getMetastoreAuthority();
 
