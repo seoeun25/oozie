@@ -19,7 +19,6 @@
 package org.apache.oozie.service;
 
 import junit.framework.Assert;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.util.StringUtils;
 import org.apache.oozie.test.XTestCase;
 
@@ -29,10 +28,9 @@ import java.util.List;
 public class TestGroupsService extends XTestCase {
 
     public void testService() throws Exception {
-        Services services = new Services();
-        Configuration conf = services.getConf();
-        conf.set(Services.CONF_SERVICE_CLASSES, StringUtils.join(",", Arrays.asList(GroupsService.class.getName())));
-        services.init();
+        Services services = initNewServices(keyValueToProperties(
+                Services.CONF_SERVICE_CLASSES, StringUtils.join(",", Arrays.asList(GroupsService.class.getName()))
+        ));
         try {
             GroupsService groups = services.get(GroupsService.class);
             Assert.assertNotNull(groups);
@@ -45,12 +43,12 @@ public class TestGroupsService extends XTestCase {
     }
 
     public void testInvalidGroupsMapping() throws Exception {
-        Services services = new Services();
-        Configuration conf = services.getConf();
-        conf.set(Services.CONF_SERVICE_CLASSES, StringUtils.join(",", Arrays.asList(GroupsService.class.getName())));
-        conf.set("oozie.service.GroupsService.hadoop.security.group.mapping", String.class.getName());
+        Services services = null;
         try {
-            services.init();
+            services = initNewServices(keyValueToProperties(
+                    Services.CONF_SERVICE_CLASSES, StringUtils.join(",", Arrays.asList(GroupsService.class.getName())),
+                    "oozie.service.GroupsService.hadoop.security.group.mapping", String.class.getName()
+            ));
             fail();
         }
         catch (ServiceException ex) {
@@ -59,7 +57,9 @@ public class TestGroupsService extends XTestCase {
             fail(ex.toString());
         }
         finally {
-            services.destroy();
+            if (services !=null) {
+                services.destroy();
+            }
         }
     }
 

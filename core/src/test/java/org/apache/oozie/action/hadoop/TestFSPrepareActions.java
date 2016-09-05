@@ -33,9 +33,9 @@ public class TestFSPrepareActions extends XFsTestCase {
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        Services services = new Services();
-        services.getConf().set(HadoopAccessorService.SUPPORTED_FILESYSTEMS, "hdfs");
-        services.init();
+        Services services = initNewServices(keyValueToProperties(
+                HadoopAccessorService.SUPPORTED_FILESYSTEMS, "hdfs"
+        ));
     }
 
     @Override

@@ -322,9 +322,9 @@ public abstract class XTestCase extends TestCase {
 
         // load test Oozie site
         String oozieTestDB = System.getProperty("oozie.test.db", "hsqldb");
-        String defaultOozieSize =
+        String defaultOozieSite =
             new File(OOZIE_SRC_DIR, "core/src/test/resources/" + oozieTestDB + "-oozie-site.xml").getAbsolutePath();
-        String customOozieSite = System.getProperty("oozie.test.config.file", defaultOozieSize);
+        String customOozieSite = System.getProperty("oozie.test.config.file", defaultOozieSite);
         File source = new File(customOozieSite);
         if(!source.isAbsolute()) {
             source = new File(OOZIE_SRC_DIR, customOozieSite);
@@ -782,7 +782,8 @@ public abstract class XTestCase extends TestCase {
             // we don't want to interfere
             try {
                 Services services = new Services();
-                services.getConf().set(Services.CONF_SERVICE_CLASSES, MINIMAL_SERVICES_FOR_DB_CLEANUP);
+                services.get(ConfigurationService.class).getConf().set(Services.CONF_SERVICE_CLASSES,
+                        MINIMAL_SERVICES_FOR_DB_CLEANUP);
                 services.init();
                 cleanUpDBTablesInternal();
             }
@@ -1145,6 +1146,25 @@ public abstract class XTestCase extends TestCase {
         }
     }
 
+    /**
+     * Initailzie {@linkplain Services} with a given configuration and set the configuration for HCatalog.
+     * @param configuration a oozie configuration
+     * @return a Services
+     * @throws ServiceException
+     */
+    protected Services initNewServicesForHCatalog(Properties configuration) throws ServiceException {
+        Services services = new Services();
+        setupServicesForHCataLogImpl(services);
+        for(String key: configuration.stringPropertyNames()) {
+            services.get(ConfigurationService.class).getConf().set(key, configuration.getProperty(key));
+        }
+        services.init();
+        return services;
+    }
+
+    /**
+     * @deprecated Use {@linkplain #initNewServicesForHCatalog(Properties)}
+     */
     protected Services setupServicesForHCatalog() throws ServiceException {
         Services services = new Services();
         setupServicesForHCataLogImpl(services);
@@ -1152,7 +1172,7 @@ public abstract class XTestCase extends TestCase {
     }
 
     private void setupServicesForHCataLogImpl(Services services) {
-        Configuration conf = services.getConf();
+        Configuration conf = services.get(ConfigurationService.class).getConf();
         conf.set(Services.CONF_SERVICE_EXT_CLASSES,
                 JMSAccessorService.class.getName() + "," +
                 PartitionDependencyManagerService.class.getName() + "," +
@@ -1196,6 +1216,41 @@ public abstract class XTestCase extends TestCase {
 
     public TestLogAppender getTestLogAppender() {
         return new TestLogAppender();
+    }
+
+    /**
+     * Initialize {@linkplain Services}
+     * @return a Services
+     * @throws ServiceException
+     */
+    protected Services initNewServices() throws ServiceException{
+        return initNewServices(new Properties());
+    }
+
+    /**
+     * Initialize {@linkplain Services} with given configuration.
+     * @param configuration a oozie configuration
+     * @return a Services
+     * @throws ServiceException
+     */
+    protected Services initNewServices(Properties configuration) throws ServiceException {
+        Services services = new Services();
+        for(String key: configuration.stringPropertyNames()) {
+            services.get(ConfigurationService.class).getConf().set(key, configuration.getProperty(key));
+        }
+        services.init();
+        return services;
+    }
+
+    protected Properties keyValueToProperties(Object... keyValues) {
+        if ((keyValues.length % 2) != 0) {
+            throw new IllegalArgumentException("Key should be pair with value");
+        }
+        Properties properties = new Properties();
+        for (int i = 0; i < keyValues.length; i += 2) {
+            properties.setProperty(keyValues[i].toString(), keyValues[i + 1].toString());
+        }
+        return properties;
     }
 
 }

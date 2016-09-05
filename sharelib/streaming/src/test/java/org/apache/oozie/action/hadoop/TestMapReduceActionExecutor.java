@@ -37,6 +37,7 @@ import org.apache.oozie.command.wf.StartXCommand;
 import org.apache.oozie.command.wf.SubmitXCommand;
 import org.apache.oozie.executor.jpa.WorkflowActionQueryExecutor;
 import org.apache.oozie.executor.jpa.WorkflowActionQueryExecutor.WorkflowActionQuery;
+import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.WorkflowAppService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.HadoopAccessorService;
@@ -241,9 +242,8 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         assertEquals(true, conf.getBoolean("mapreduce.job.complete.cancel.delegation.tokens", false));
 
         // Enable uber jars to test that MapReduceActionExecutor picks up the oozie.mapreduce.uber.jar property correctly
-        Services serv = Services.get();
-        boolean originalUberJarDisabled = serv.getConf().getBoolean("oozie.action.mapreduce.uber.jar.enable", false);
-        serv.getConf().setBoolean("oozie.action.mapreduce.uber.jar.enable", true);
+        boolean originalUberJarDisabled = ConfigurationService.getBoolean("oozie.action.mapreduce.uber.jar.enable");
+        ConfigurationService.setBoolean("oozie.action.mapreduce.uber.jar.enable", true);
 
         actionXml = createUberJarActionXML(getNameNodeUri() + "/app/job.jar", "");
         conf = ae.createBaseHadoopConf(context, actionXml);
@@ -289,7 +289,7 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         assertNull(launcherJobConf.getJar());                                                   // same for launcher conf
 
         // Disable uber jars to test that MapReduceActionExecutor won't allow the oozie.mapreduce.uber.jar property
-        serv.getConf().setBoolean("oozie.action.mapreduce.uber.jar.enable", false);
+        ConfigurationService.setBoolean("oozie.action.mapreduce.uber.jar.enable", false);
         try {
             actionXml = createUberJarActionXML(getNameNodeUri() + "/app/job.jar", "");
             conf = ae.createBaseHadoopConf(context, actionXml);
@@ -301,7 +301,7 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
             assertTrue(aee.getMessage().contains("oozie.action.mapreduce.uber.jar.enable"));
             assertTrue(aee.getMessage().contains("oozie.mapreduce.uber.jar"));
         }
-        serv.getConf().setBoolean("oozie.action.mapreduce.uber.jar.enable", originalUberJarDisabled);
+        ConfigurationService.setBoolean("oozie.action.mapreduce.uber.jar.enable", originalUberJarDisabled);
 
         actionXml = XmlUtils.parseXml("<map-reduce>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>"
                 + "<name-node>" + getNameNodeUri() + "</name-node>" + "<streaming>" + "<mapper>M</mapper>"
@@ -770,9 +770,9 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
     // With the oozie.action.mapreduce.uber.jar.enable property set to false, a workflow with an uber jar should fail
     public void testMapReduceWithUberJarDisabled() throws Exception {
         Services serv = Services.get();
-        boolean originalUberJarDisabled = serv.getConf().getBoolean("oozie.action.mapreduce.uber.jar.enable", false);
+        boolean originalUberJarDisabled = ConfigurationService.getBoolean("oozie.action.mapreduce.uber.jar.enable");
         try {
-            serv.getConf().setBoolean("oozie.action.mapreduce.uber.jar.enable", false);
+            ConfigurationService.setBoolean("oozie.action.mapreduce.uber.jar.enable", false);
             _testMapReduceWithUberJar();
         } catch (ActionExecutorException aee) {
             assertEquals("MR003", aee.getErrorCode());
@@ -782,20 +782,19 @@ public class TestMapReduceActionExecutor extends ActionExecutorTestCase {
         } catch (Exception e) {
             throw e;
         } finally {
-            serv.getConf().setBoolean("oozie.action.mapreduce.uber.jar.enable", originalUberJarDisabled);
+            ConfigurationService.setBoolean("oozie.action.mapreduce.uber.jar.enable", originalUberJarDisabled);
         }
     }
 
     public void testMapReduceWithUberJarEnabled() throws Exception {
-        Services serv = Services.get();
-        boolean originalUberJarDisabled = serv.getConf().getBoolean("oozie.action.mapreduce.uber.jar.enable", false);
+        boolean originalUberJarDisabled = ConfigurationService.getBoolean("oozie.action.mapreduce.uber.jar.enable");
         try {
-            serv.getConf().setBoolean("oozie.action.mapreduce.uber.jar.enable", true);
+            ConfigurationService.setBoolean("oozie.action.mapreduce.uber.jar.enable", true);
             _testMapReduceWithUberJar();
         } catch (Exception e) {
             throw e;
         } finally {
-            serv.getConf().setBoolean("oozie.action.mapreduce.uber.jar.enable", originalUberJarDisabled);
+            ConfigurationService.setBoolean("oozie.action.mapreduce.uber.jar.enable", originalUberJarDisabled);
         }
     }
 

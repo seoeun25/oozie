@@ -601,10 +601,11 @@ public class TestLiteWorkflowAppService extends XTestCase {
 
     public void checkSubworkflowLibHelper(String inherit, String inheritWF, int unique, String[] parentLibs, String[] childLibs,
             String[] expectedLibs) throws Exception {
-        Services services = new Services();
+        Services services = null;
         try {
-            services.getConf().set("oozie.subworkflow.classpath.inheritance", inherit);
-            services.init();
+            services = initNewServices(keyValueToProperties(
+                    "oozie.subworkflow.classpath.inheritance", inherit
+            ));
             Reader reader = IOUtils.getResourceAsReader("wf-schema-valid.xml", -1);
             String childWFDir = createTestCaseSubDir("child-wf-" + unique);
             File childWFFile = new File(childWFDir, "workflow.xml");
@@ -655,7 +656,9 @@ public class TestLiteWorkflowAppService extends XTestCase {
             }
         }
         finally {
-            services.destroy();
+            if (services != null) {
+                services.destroy();
+            }
         }
     }
 }

@@ -18,7 +18,6 @@
 
 package org.apache.oozie.event;
 
-import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.service.EventHandlerService;
 import org.apache.oozie.service.JMSAccessorService;
@@ -40,15 +39,13 @@ public class TestEventQueue extends XDataTestCase {
     @Before
     protected void setUp() throws Exception {
         super.setUp();
-        services = new Services();
-        Configuration conf = services.getConf();
-        conf.set(Services.CONF_SERVICE_EXT_CLASSES,
-                JMSAccessorService.class.getName() + "," + JMSTopicService.class.getName() + ","
-                        + EventHandlerService.class.getName() + "," + SLAService.class.getName());
-        conf.setInt(EventHandlerService.CONF_BATCH_SIZE, 3);
-        conf.set(EventHandlerService.CONF_LISTENERS, ""); // this unit test is meant to
-                                                          // target queue operations only
-        services.init();
+        services = initNewServices(keyValueToProperties(
+                Services.CONF_SERVICE_EXT_CLASSES,
+                        JMSAccessorService.class.getName() + "," + JMSTopicService.class.getName() + ","
+                                + EventHandlerService.class.getName() + "," + SLAService.class.getName(),
+                EventHandlerService.CONF_BATCH_SIZE, 3,
+                EventHandlerService.CONF_LISTENERS, "" // this unit test is meant to target queue operations only
+        ));
     }
 
     @After

@@ -23,6 +23,7 @@ import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
@@ -64,8 +65,7 @@ public class TestHCatMessageHandler extends XDataTestCase {
     @Before
     protected void setUp() throws Exception {
         super.setUp();
-        services = super.setupServicesForHCatalog();
-        services.init();
+        services = initNewServicesForHCatalog(new Properties());
         connFac = new ActiveMQConnectionFactory(localActiveMQBroker);
         conn = connFac.createConnection();
         conn.start();

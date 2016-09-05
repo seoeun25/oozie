@@ -21,7 +21,7 @@ package org.apache.oozie.jms;
 import javax.jms.JMSException;
 import javax.jms.Session;
 
-import org.apache.hadoop.conf.Configuration;
+import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.JMSAccessorService;
 import org.apache.oozie.service.JMSTopicService;
 import org.apache.oozie.service.Services;
@@ -39,14 +39,13 @@ public class TestDefaultConnectionContext extends XTestCase {
     @Before
     protected void setUp() throws Exception {
         super.setUp();
-        services = new Services();
-        Configuration conf = services.getConf();
-        conf.set(Services.CONF_SERVICE_EXT_CLASSES,
-                JMSAccessorService.class.getName() + "," + JMSTopicService.class.getName());
-        conf.set(JMSJobEventListener.JMS_CONNECTION_PROPERTIES, "java.naming.factory.initial#"
-                + ActiveMQConnFactory + ";" + "java.naming.provider.url#" + localActiveMQBroker
-                + ";connectionFactoryNames#" + "ConnectionFactory");
-        services.init();
+        services = initNewServices(keyValueToProperties(
+                Services.CONF_SERVICE_EXT_CLASSES,
+                JMSAccessorService.class.getName() + "," + JMSTopicService.class.getName(),
+                JMSJobEventListener.JMS_CONNECTION_PROPERTIES, "java.naming.factory.initial#"
+                        + ActiveMQConnFactory + ";" + "java.naming.provider.url#" + localActiveMQBroker
+                        + ";connectionFactoryNames#" + "ConnectionFactory"
+        ));
     }
 
     @After
@@ -57,7 +56,7 @@ public class TestDefaultConnectionContext extends XTestCase {
 
     @Test
     public void testThreadLocalSession() throws JMSException {
-        String jmsProps = services.getConf().get(JMSJobEventListener.JMS_CONNECTION_PROPERTIES);
+        String jmsProps = ConfigurationService.get(JMSJobEventListener.JMS_CONNECTION_PROPERTIES);
         JMSConnectionInfo connInfo = new JMSConnectionInfo(jmsProps);
         ConnectionContext jmsContext = Services.get().get(JMSAccessorService.class)
                 .createConnectionContext(connInfo);

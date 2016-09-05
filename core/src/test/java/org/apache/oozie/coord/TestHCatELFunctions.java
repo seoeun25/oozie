@@ -51,11 +51,11 @@ public class TestHCatELFunctions extends XHCatTestCase {
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        services = new Services();
-        services.getConf().set(URIHandlerService.URI_HANDLERS,
-                FSURIHandler.class.getName() + "," + HCatURIHandler.class.getName());
+        services = initNewServices(keyValueToProperties(
+                URIHandlerService.URI_HANDLERS,
+                FSURIHandler.class.getName() + "," + HCatURIHandler.class.getName()
+        ));
         services.setService(HCatAccessorService.class);
-        services.init();
     }
 
     @Override

@@ -27,9 +27,9 @@ public class TestMetricsInstrumentationService extends XTestCase {
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        Services services = new Services();
-        services.getConf().set(Services.CONF_SERVICE_EXT_CLASSES, "org.apache.oozie.service.MetricsInstrumentationService");
-        services.init();
+        Services services = initNewServices(keyValueToProperties(
+                Services.CONF_SERVICE_EXT_CLASSES, "org.apache.oozie.service.MetricsInstrumentationService"
+        ));
     }
 
     @Override

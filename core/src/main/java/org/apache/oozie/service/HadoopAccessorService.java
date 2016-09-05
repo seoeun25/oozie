@@ -42,7 +42,6 @@ import java.io.FileInputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.net.URI;
@@ -108,7 +107,7 @@ public class HadoopAccessorService implements Service {
 
     public void init(Services services) throws ServiceException {
         this.ugiService = services.get(UserGroupInformationService.class);
-        init(services.getConf());
+        init(services.get(ConfigurationService.class).getConf());
     }
 
     //for testing purposes, see XFsTestCase

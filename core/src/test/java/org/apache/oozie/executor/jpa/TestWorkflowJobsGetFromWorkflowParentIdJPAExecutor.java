@@ -22,12 +22,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import org.apache.oozie.CoordinatorActionBean;
-import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
-import org.apache.oozie.client.CoordinatorAction;
-import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.service.JPAService;
@@ -44,9 +40,7 @@ public class TestWorkflowJobsGetFromWorkflowParentIdJPAExecutor extends XDataTes
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        services = new Services();
-        setClassesToBeExcluded(services.getConf(), excludedServices);
-        services.init();
+        services = initNewServices(excludedServices);
     }
 
     @Override

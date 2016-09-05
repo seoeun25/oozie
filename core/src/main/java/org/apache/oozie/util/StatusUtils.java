@@ -18,12 +18,10 @@
 
 package org.apache.oozie.util;
 
-import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.client.Job;
 import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.SchemaService;
-import org.apache.oozie.service.Services;
 import org.apache.oozie.service.StatusTransitService;
 
 public class StatusUtils {
@@ -131,7 +129,6 @@ public class StatusUtils {
     public static boolean isV1CoordjobKillable(CoordinatorJobBean coordJob) {
         boolean ret = false;
         if (coordJob != null) {
-            Configuration conf = Services.get().getConf();
             boolean backwardSupportForCoordStatus = ConfigUtils.isBackwardSupportForCoordStatus();
             if (backwardSupportForCoordStatus) {
                 if (coordJob.getAppNamespace() != null

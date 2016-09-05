@@ -95,7 +95,7 @@ public class SLACalculatorMemory implements SLACalculator {
         // schedule runnable by default 1 hours
         Services.get()
                 .get(SchedulerService.class)
-                .schedule(purgeThread, 3600, Services.get().getConf().getInt(SLAService.CONF_SLA_HISTORY_PURGE_INTERVAL, 3600),
+                .schedule(purgeThread, 3600, ConfigurationService.getInt(SLAService.CONF_SLA_HISTORY_PURGE_INTERVAL),
                         SchedulerService.Unit.SEC);
     }
 
@@ -490,7 +490,7 @@ public class SLACalculatorMemory implements SLACalculator {
         if (slaCalc != null) {
             try {
                 SLAXCommandFactory.getSLAEventXCommand(slaCalc,
-                        ConfigurationService.getLong(SLAService.CONF_SLA_CALC_LOCK_TIMEOUT, 20 * 1000)).call();
+                        ConfigurationService.getLong(SLAService.CONF_SLA_CALC_LOCK_TIMEOUT)).call();
                 checkEventProc(slaCalc);
             }
             catch (XException e) {

@@ -43,6 +43,7 @@ import org.apache.oozie.executor.jpa.CoordJobInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobQueryExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.CallableQueueService;
+import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
@@ -51,7 +52,6 @@ import org.apache.oozie.test.XDataTestCase;
 import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.IOUtils;
 import org.apache.oozie.util.XConfiguration;
-import org.apache.oozie.util.XLog;
 import org.apache.oozie.util.XmlUtils;
 import org.jdom.Element;
 import org.junit.Test;
@@ -70,8 +70,7 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
         super.setUp();
         setSystemProperty(XLogService.LOG4J_FILE, "oozie-log4j.properties");
         setSystemProperty(DateUtils.OOZIE_PROCESSING_TIMEZONE_KEY, getProcessingTZ());
-        services = new Services();
-        services.init();
+        services = initNewServices();
         TZ = (getProcessingTZ().equals(DateUtils.OOZIE_PROCESSING_TIMEZONE_DEFAULT))
              ? "Z" : getProcessingTZ().substring(3);
     }
@@ -215,7 +214,7 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
     }
 
     public void testActionInputCheckLatestActionCreationTime() throws Exception {
-        Services.get().getConf().setBoolean(CoordELFunctions.LATEST_EL_USE_CURRENT_TIME, false);
+        ConfigurationService.setBoolean(CoordELFunctions.LATEST_EL_USE_CURRENT_TIME, false);
 
         String jobId = "0000000-" + new Date().getTime() + "-TestCoordActionInputCheckXCommand-C";
         Date startTime = DateUtils.parseDateOozieTZ("2009-02-15T23:59" + TZ);
@@ -271,7 +270,7 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
 
     public void testActionInputCheckLatestActionCreationTimeWithPushDependency() throws Exception {
         setupServicesForHCatalog(services);
-        Services.get().getConf().setBoolean(CoordELFunctions.LATEST_EL_USE_CURRENT_TIME, false);
+        services.get(ConfigurationService.class).setBoolean(CoordELFunctions.LATEST_EL_USE_CURRENT_TIME, false);
         services.init();
         String jobId = "0000000-" + new Date().getTime() + "-TestCoordActionInputCheckXCommand-C";
         Date startTime = DateUtils.parseDateOozieTZ("2009-02-15T23:59" + TZ);
@@ -350,7 +349,7 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
     }
 
     public void testActionInputCheckLatestCurrentTime() throws Exception {
-        Services.get().getConf().setBoolean(CoordELFunctions.LATEST_EL_USE_CURRENT_TIME, true);
+        ConfigurationService.setBoolean(CoordELFunctions.LATEST_EL_USE_CURRENT_TIME, true);
 
         String jobId = "0000000-" + new Date().getTime() + "-TestCoordActionInputCheckXCommand-C";
         Date startTime = DateUtils.parseDateOozieTZ("2009-02-15T23:59" + TZ);
@@ -404,7 +403,7 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
 
     public void testActionInputCheckLatestCurrentTimeWithPushDependency() throws Exception {
         setupServicesForHCatalog(services);
-        Services.get().getConf().setBoolean(CoordELFunctions.LATEST_EL_USE_CURRENT_TIME, true);
+        services.get(ConfigurationService.class).setBoolean(CoordELFunctions.LATEST_EL_USE_CURRENT_TIME, true);
         services.init();
 
         String jobId = "0000000-" + new Date().getTime() + "-TestCoordActionInputCheckXCommand-C";
@@ -582,8 +581,8 @@ public class TestCoordActionInputCheckXCommand extends XDataTestCase {
         CoordinatorJobBean job = addRecordToCoordJobTable(jobId, startTime, endTime);
         /* Override the property value for testing purpose only. */
         long testedValue = 12000;
-        Services.get().getConf().setLong(CoordActionInputCheckXCommand.CONF_COORD_INPUT_CHECK_REQUEUE_INTERVAL,
-                testedValue);
+        ConfigurationService.set(CoordActionInputCheckXCommand.CONF_COORD_INPUT_CHECK_REQUEUE_INTERVAL,
+                String.valueOf(testedValue));
 
         CoordActionInputCheckXCommand caicc = new CoordActionInputCheckXCommand(job.getId() + "@1", job.getId());
 

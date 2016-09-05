@@ -37,9 +37,7 @@ public class TestCoordJobsCountNotForPurgeFromParentIdJPAExecutor extends XDataT
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        services = new Services();
-        setClassesToBeExcluded(services.getConf(), excludedServices);
-        services.init();
+        services = initNewServices(excludedServices);
     }
 
     @Override

@@ -71,9 +71,7 @@ public class TestPurgeService extends XDataTestCase {
     protected void setUp() throws Exception {
         super.setUp();
         setSystemProperty(SchemaService.WF_CONF_EXT_SCHEMAS, "wf-ext-schema.xsd");
-        services = new Services();
-        setClassesToBeExcluded(services.getConf(), excludedServices);
-        services.init();
+        services = initNewServices(excludedServices);
         services.get(ActionService.class).registerAndInitExecutor(ForTestingActionExecutor.class);
     }
 

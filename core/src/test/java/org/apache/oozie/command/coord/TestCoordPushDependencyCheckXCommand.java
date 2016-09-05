@@ -20,6 +20,7 @@ package org.apache.oozie.command.coord;
 
 import java.io.ByteArrayOutputStream;
 import java.util.List;
+import java.util.Properties;
 
 import org.apache.log4j.Appender;
 import org.apache.log4j.Layout;
@@ -35,6 +36,7 @@ import org.apache.oozie.dependency.DependencyChecker;
 import org.apache.oozie.executor.jpa.CoordActionGetJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.service.CallableQueueService;
+import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.HCatAccessorService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.PartitionDependencyManagerService;
@@ -55,8 +57,7 @@ public class TestCoordPushDependencyCheckXCommand extends XDataTestCase {
     @Before
     protected void setUp() throws Exception {
         super.setUp();
-        services = super.setupServicesForHCatalog();
-        services.init();
+        services = initNewServicesForHCatalog(new Properties());
         server = getMetastoreAuthority();
     }
 
@@ -354,7 +355,7 @@ public class TestCoordPushDependencyCheckXCommand extends XDataTestCase {
 
     @Test
     public void testRequeueOnException() throws Exception {
-        Services.get().getConf().setInt(RecoveryService.CONF_SERVICE_INTERVAL, 6000);
+        ConfigurationService.setInt(RecoveryService.CONF_SERVICE_INTERVAL, 6000);
         // Test timeout when table containing missing dependencies is dropped in between
         String newHCatDependency1 = "hcat://" + server + "/nodb/notable/dt=20120430;country=brazil";
         String newHCatDependency2 = "hcat://" + server + "/nodb/notable/dt=20120430;country=usa";

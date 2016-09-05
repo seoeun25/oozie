@@ -38,9 +38,7 @@ import org.apache.oozie.client.event.jms.JMSHeaderConstants;
 import org.apache.oozie.client.event.message.CoordinatorActionMessage;
 import org.apache.oozie.client.event.message.WorkflowJobMessage;
 import org.apache.oozie.event.*;
-import org.apache.oozie.jms.ConnectionContext;
-import org.apache.oozie.jms.JMSConnectionInfo;
-import org.apache.oozie.jms.JMSJobEventListener;
+import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.JMSAccessorService;
 import org.apache.oozie.service.JMSTopicService;
 import org.apache.oozie.service.Services;
@@ -60,7 +58,7 @@ public class TestJMSJobEventListener extends XTestCase {
     protected void setUp() throws Exception {
         super.setUp();
         services = new Services();
-        conf = services.getConf();
+        conf = services.get(ConfigurationService.class).getConf();
         conf.set(Services.CONF_SERVICE_EXT_CLASSES,
                 JMSAccessorService.class.getName() + "," + JMSTopicService.class.getName());
         conf.set(JMSJobEventListener.JMS_CONNECTION_PROPERTIES, "java.naming.factory.initial#" + ActiveMQConnFactory
@@ -323,7 +321,7 @@ public class TestJMSJobEventListener extends XTestCase {
         try {
             services.destroy();
             services = new Services();
-            Configuration conf = services.getConf();
+            Configuration conf = services.get(ConfigurationService.class).getConf();
             conf.set(Services.CONF_SERVICE_EXT_CLASSES, JMSAccessorService.class.getName() + ","
                     + JMSTopicService.class.getName());
             int randomPort = 30000 + random.nextInt(10000);
@@ -568,7 +566,7 @@ public class TestJMSJobEventListener extends XTestCase {
     }
 
     private ConnectionContext getConnectionContext() {
-        Configuration conf = services.getConf();
+        Configuration conf = services.get(ConfigurationService.class).getConf();
         String jmsProps = conf.get(JMSJobEventListener.JMS_CONNECTION_PROPERTIES);
         JMSConnectionInfo connInfo = new JMSConnectionInfo(jmsProps);
         JMSAccessorService jmsService = Services.get().get(JMSAccessorService.class);

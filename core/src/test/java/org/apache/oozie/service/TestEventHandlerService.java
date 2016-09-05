@@ -19,6 +19,7 @@
 package org.apache.oozie.service;
 
 import java.util.List;
+import java.util.Properties;
 import java.util.Set;
 
 import org.apache.hadoop.conf.Configuration;
@@ -47,11 +48,10 @@ public class TestEventHandlerService extends XDataTestCase {
     @Before
     protected void setUp() throws Exception {
         super.setUp();
-        Services services = new Services();
-        Configuration conf = services.getConf();
-        conf.set(Services.CONF_SERVICE_EXT_CLASSES, "org.apache.oozie.service.EventHandlerService");
-        conf.setClass(EventHandlerService.CONF_LISTENERS, DummyJobEventListener.class, JobEventListener.class);
-        services.init();
+        Services services = initNewServices(keyValueToProperties(
+                EventHandlerService.CONF_LISTENERS, DummyJobEventListener.class.getName() + ", " + JobEventListener.class.getName()
+        ));
+        services.setService(EventHandlerService.class);
         output.setLength(0);
     }
 
@@ -72,10 +72,9 @@ public class TestEventHandlerService extends XDataTestCase {
 
         Services services = Services.get();
         services.destroy();
-        services = new Services();
-        Configuration conf = services.getConf();
-        conf.set(Services.CONF_SERVICE_EXT_CLASSES, "");
-        services.init();
+        services = initNewServices(keyValueToProperties(
+                Services.CONF_SERVICE_EXT_CLASSES, ""
+        ));
         assertFalse(EventHandlerService.isEnabled());
     }
 

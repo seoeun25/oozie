@@ -19,7 +19,6 @@
 package org.apache.oozie.command.wf;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.Writer;

@@ -35,9 +35,6 @@ import org.apache.oozie.executor.jpa.BundleJobsGetUnpausedJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobsGetPausedJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobsGetUnpausedJPAExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
-import org.apache.oozie.service.SchedulerService;
-import org.apache.oozie.service.Service;
-import org.apache.oozie.service.Services;
 import org.apache.oozie.lock.LockToken;
 import org.apache.oozie.util.ConfigUtils;
 import org.apache.oozie.util.XCallable;
@@ -234,7 +231,7 @@ public class PauseTransitService implements Service {
     public void init(Services services) {
         Runnable bundlePauseStartRunnable = new PauseTransitRunnable();
         services.get(SchedulerService.class).schedule(bundlePauseStartRunnable, 10,
-                ConfigurationService.getInt(services.getConf(), CONF_BUNDLE_PAUSE_START_INTERVAL),
+                ConfigurationService.getInt(CONF_BUNDLE_PAUSE_START_INTERVAL),
                 SchedulerService.Unit.SEC);
     }
 

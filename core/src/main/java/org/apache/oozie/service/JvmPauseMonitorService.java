@@ -29,9 +29,7 @@ import java.lang.management.ManagementFactory;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.util.Daemon;
-import org.apache.oozie.util.ConfigUtils;
 import org.apache.oozie.util.Instrumentation;
 import org.apache.oozie.util.XLog;
 
@@ -71,8 +69,8 @@ public class JvmPauseMonitorService implements Service {
 
     @Override
     public void init(Services services) throws ServiceException {
-        warnThresholdMs = ConfigurationService.getLong(services.getConf(), WARN_THRESHOLD_KEY);
-        infoThresholdMs = ConfigurationService.getLong(services.getConf(), INFO_THRESHOLD_KEY);
+        warnThresholdMs = ConfigurationService.getLong(WARN_THRESHOLD_KEY);
+        infoThresholdMs = ConfigurationService.getLong(INFO_THRESHOLD_KEY);
 
         instrumentation = services.get(InstrumentationService.class).get();
 

@@ -103,17 +103,14 @@ public class TestSLAEventGeneration extends XDataTestCase {
     @Before
     protected void setUp() throws Exception {
         super.setUp();
-        services = new Services();
-        Configuration conf = services.getConf();
-        setClassesToBeExcluded(conf, excludeServices);
-        conf.set(Services.CONF_SERVICE_EXT_CLASSES,
-                EventHandlerService.class.getName() + "," + SLAService.class.getName());
-        conf.setClass(EventHandlerService.CONF_LISTENERS, SLAJobEventListener.class, JobEventListener.class);
-        conf.setInt(EventHandlerService.CONF_WORKER_INTERVAL, 10000);
-        conf.setInt(EventHandlerService.CONF_WORKER_THREADS, 0);
-        conf.setInt(EventHandlerService.CONF_BATCH_SIZE, 1);
-        conf.setInt(OozieClient.SLA_DISABLE_ALERT_OLDER_THAN, -1);
-        services.init();
+        services = initNewServices(keyValueToProperties(
+                Services.CONF_SERVICE_EXT_CLASSES, EventHandlerService.class.getName() + "," + SLAService.class.getName(),
+                EventHandlerService.CONF_LISTENERS, SLAJobEventListener.class.getName() + "," + JobEventListener.class.getName(),
+                EventHandlerService.CONF_WORKER_INTERVAL, 10000,
+                EventHandlerService.CONF_WORKER_THREADS, 0,
+                EventHandlerService.CONF_BATCH_SIZE, 1,
+                OozieClient.SLA_DISABLE_ALERT_OLDER_THAN, -1
+        ), excludeServices);
         jpa = services.get(JPAService.class);
         ehs = services.get(EventHandlerService.class);
         cal = Calendar.getInstance();

@@ -23,7 +23,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.BundleJobBean;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.ErrorCode;
@@ -49,8 +48,8 @@ import org.apache.oozie.util.XLog;
  * SUCCEEDED.
  */
 public class StatusTransitService implements Service {
-    private static final String CONF_PREFIX = Service.CONF_PREFIX + "StatusTransitService.";
-    private static final String CONF_STATUSTRANSIT_INTERVAL = CONF_PREFIX + "statusTransit.interval";
+    public static final String CONF_PREFIX = Service.CONF_PREFIX + "StatusTransitService.";
+    public static final String CONF_STATUSTRANSIT_INTERVAL = CONF_PREFIX + "statusTransit.interval";
     public static final String CONF_BACKWARD_SUPPORT_FOR_COORD_STATUS = CONF_PREFIX
             + "backward.support.for.coord.status";
     public static final String CONF_BACKWARD_SUPPORT_FOR_STATES_WITHOUT_ERROR = CONF_PREFIX
@@ -214,10 +213,9 @@ public class StatusTransitService implements Service {
      */
     @Override
     public void init(Services services) {
-        final Configuration conf = services.getConf();
         Runnable stateTransitRunnable = new StatusTransitRunnable();
         services.get(SchedulerService.class).schedule(stateTransitRunnable, 10,
-                ConfigurationService.getInt(conf, CONF_STATUSTRANSIT_INTERVAL), SchedulerService.Unit.SEC);
+                ConfigurationService.getInt(CONF_STATUSTRANSIT_INTERVAL), SchedulerService.Unit.SEC);
     }
 
     /**

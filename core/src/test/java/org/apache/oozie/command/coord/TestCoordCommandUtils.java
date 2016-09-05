@@ -23,6 +23,8 @@ import java.io.StringReader;
 import java.text.ParseException;
 import java.util.Date;
 import java.util.List;
+import java.util.Properties;
+
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.client.CoordinatorJob;
@@ -58,8 +60,7 @@ public class TestCoordCommandUtils extends XDataTestCase {
     protected void setUp() throws Exception {
         super.setUp();
         setSystemProperty(DateUtils.OOZIE_PROCESSING_TIMEZONE_KEY, getProcessingTZ());
-        services = super.setupServicesForHCatalog();
-        services.init();
+        services = initNewServicesForHCatalog(new Properties());
         hcatServer = getMetastoreAuthority();
     }
 

@@ -21,17 +21,10 @@ package org.apache.oozie.service;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryMXBean;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 
-import org.apache.oozie.CoordinatorActionBean;
-import org.apache.oozie.client.CoordinatorAction.Status;
-import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.dependency.hcat.HCatMessageHandler;
-import org.apache.oozie.executor.jpa.BatchQueryExecutor;
 import org.apache.oozie.jms.JMSConnectionInfo;
-import org.apache.oozie.service.Services;
 import org.apache.oozie.test.XDataTestCase;
 import org.apache.oozie.util.HCatURI;
 import org.apache.oozie.util.XLog;
@@ -48,10 +41,10 @@ public class TestPartitionDependencyManagerService extends XDataTestCase {
 
     protected void setUp() throws Exception {
         super.setUp();
-        services = super.setupServicesForHCatalog();
         // disable regular cache purge
-        services.getConf().setInt(PartitionDependencyManagerService.CACHE_PURGE_INTERVAL, 1000000);
-        services.init();
+        services = initNewServicesForHCatalog(keyValueToProperties(
+                PartitionDependencyManagerService.CACHE_PURGE_INTERVAL, 1000000
+        ));
     }
 
     protected void tearDown() throws Exception {

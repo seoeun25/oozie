@@ -34,7 +34,7 @@ import org.apache.hadoop.util.Shell;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.client.WorkflowAction;
-import org.apache.oozie.service.ActionService;
+import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.WorkflowAppService;
@@ -263,9 +263,9 @@ public class TestShellActionExecutor extends ActionExecutorTestCase {
      */
     public void testEnvVar() throws Exception {
         Services.get().destroy();
-        Services services = new Services();
-        services.getConf().setInt(LauncherMapper.CONF_OOZIE_ACTION_MAX_OUTPUT_DATA, 8 * 1042);
-        services.init();
+        Services services = initNewServices(keyValueToProperties(
+                LauncherMapper.CONF_OOZIE_ACTION_MAX_OUTPUT_DATA, 8 * 1042
+        ));
 
         FileSystem fs = getFileSystem();
         // Create the script file with canned shell command
@@ -424,7 +424,7 @@ public class TestShellActionExecutor extends ActionExecutorTestCase {
     }
 
     public void testShellMainPathInUber() throws Exception {
-        Services.get().getConf().setBoolean("oozie.action.shell.launcher.mapreduce.job.ubertask.enable", true);
+        ConfigurationService.setBoolean("oozie.action.shell.launcher.mapreduce.job.ubertask.enable", true);
 
         Element actionXml = XmlUtils.parseXml("<shell>" + "<job-tracker>" + getJobTrackerUri() + "</job-tracker>"
                 + "<name-node>" + getNameNodeUri() + "</name-node>" + "<exec>script.sh</exec>"

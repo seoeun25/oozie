@@ -33,10 +33,10 @@ public class TestHCatPrepareActions extends XHCatTestCase {
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        Services services = new Services();
-        services.getConf().set(URIHandlerService.URI_HANDLERS,
-                FSURIHandler.class.getName() + "," + HCatURIHandler.class.getName());
-        services.init();
+        Services services = initNewServices(keyValueToProperties(
+                URIHandlerService.URI_HANDLERS,
+                FSURIHandler.class.getName() + "," + HCatURIHandler.class.getName()
+        ));
     }
 
     @Override
