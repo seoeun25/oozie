@@ -785,11 +785,12 @@ public abstract class XDataTestCase extends XHCatTestCase {
 
     protected WorkflowJobBean addRecordToWfJobTable(WorkflowApp app, WorkflowJob.Status jobStatus,
             WorkflowInstance.Status instanceStatus) throws Exception {
-        Configuration conf = new Configuration();
-        Path appUri = new Path(getAppPath(), "workflow.xml");
-        conf.set(OozieClient.APP_PATH, appUri.toString());
-        conf.set(OozieClient.LOG_TOKEN, "testToken");
-        conf.set(OozieClient.USER_NAME, getTestUser());
+        Configuration conf = getWFConf(getAppPath());
+//        Configuration conf = new Configuration();
+//        Path appUri = new Path(getAppPath(), "workflow.xml");
+//        conf.set(OozieClient.APP_PATH, appUri.toString());
+//        conf.set(OozieClient.LOG_TOKEN, "testToken");
+//        conf.set(OozieClient.USER_NAME, getTestUser());
 
         WorkflowJobBean wfBean = createWorkflow(app, conf, jobStatus, instanceStatus);
 
@@ -805,6 +806,15 @@ public abstract class XDataTestCase extends XHCatTestCase {
             throw je;
         }
         return wfBean;
+    }
+
+    protected Configuration getWFConf(Path appPath) {
+        Configuration conf = new Configuration();
+        Path appUri = new Path(appPath, "workflow.xml");
+        conf.set(OozieClient.APP_PATH, appUri.toString());
+        conf.set(OozieClient.LOG_TOKEN, "testToken");
+        conf.set(OozieClient.USER_NAME, getTestUser());
+        return conf;
     }
 
     protected Path getAppPath() {

@@ -18,17 +18,23 @@
 
 package org.apache.oozie.command;
 
+import java.io.IOException;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.client.Job;
+import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.rest.JsonBean;
+import org.apache.oozie.command.coord.CoordActionNotificationXCommand;
 import org.apache.oozie.command.coord.CoordinatorXCommand;
 import org.apache.oozie.executor.jpa.BatchQueryExecutor.UpdateEntry;
 import org.apache.oozie.util.ParamChecker;
+import org.apache.oozie.util.XConfiguration;
 
 /**
  * This is the base commands for all the jobs related commands . This will drive the statuses for all the jobs and all
@@ -124,6 +130,21 @@ public abstract class TransitionXCommand<T> extends XCommand<T> {
      */
     public void setJob(Job job) {
         this.job = ParamChecker.notNull(job, "job");
+    }
+
+    protected void notifyCoordActionStatus(CoordinatorActionBean coordActionBean) {
+        Configuration conf = null;
+        try {
+            conf = new XConfiguration(new StringReader(coordActionBean.getRunConf()));
+        }
+        catch (IOException e1) {
+            LOG.warn("Configuration parse error. :" + coordActionBean.getRunConf());
+            return;
+        }
+        String url = conf.get(OozieClient.COORD_ACTION_NOTIFICATION_URL);
+        if (url != null) {
+            queue(new CoordActionNotificationXCommand(coordActionBean), 100);
+        }
     }
 
 }

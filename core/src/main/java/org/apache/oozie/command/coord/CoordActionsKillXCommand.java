@@ -133,7 +133,7 @@ public class CoordActionsKillXCommand extends KillTransitionXCommand<Coordinator
                 CoordinatorXCommand.generateEvent(coordAction, coordJob.getUser(), coordJob.getAppName(),
                         coordAction.getCreatedTime());
             }
-            queue(new CoordActionNotificationXCommand(coordAction), 100);
+            notifyCoordActionStatus(coordAction);
         }
         CoordinatorActionInfo coordInfo = new CoordinatorActionInfo(coordActions);
         ret = coordInfo;

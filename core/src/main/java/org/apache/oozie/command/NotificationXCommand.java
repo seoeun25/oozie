@@ -57,6 +57,7 @@ public abstract class NotificationXCommand extends XCommand<Void> {
 
     @Override
     protected Void execute() throws CommandException {
+        LOG.info("---- execute");
         sendNotification();
         return null;
     }
@@ -92,7 +93,7 @@ public abstract class NotificationXCommand extends XCommand<Void> {
     }
 
     protected void handleRetry() {
-        if (retries < 3) {
+        if (retries < 0) {
             retries++;
             this.resetUsed();
             queue(this, 60 * 1000);

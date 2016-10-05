@@ -64,7 +64,7 @@ public class CoordActionTimeOutXCommand extends CoordinatorXCommand<Void> {
         if (actionBean.getStatus() == CoordinatorAction.Status.WAITING) {
             actionBean.setStatus(CoordinatorAction.Status.TIMEDOUT);
             try {
-                queue(new CoordActionNotificationXCommand(actionBean), 100);
+                notifyCoordActionStatus(actionBean);
                 actionBean.setLastModifiedTime(new Date());
                 CoordActionQueryExecutor.getInstance().executeUpdate(
                         CoordActionQuery.UPDATE_COORD_ACTION_STATUS_PENDING_TIME, actionBean);

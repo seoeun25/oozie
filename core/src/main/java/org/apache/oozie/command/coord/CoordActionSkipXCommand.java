@@ -63,7 +63,7 @@ public class CoordActionSkipXCommand extends CoordinatorXCommand<Void> {
             LOG.info("Setting action [{0}] status to SKIPPED", actionBean.getId());
             actionBean.setStatus(CoordinatorAction.Status.SKIPPED);
             try {
-                queue(new CoordActionNotificationXCommand(actionBean), 100);
+                notifyCoordActionStatus(actionBean);
                 actionBean.setLastModifiedTime(new Date());
                 CoordActionQueryExecutor.getInstance().executeUpdate(
                         CoordActionQuery.UPDATE_COORD_ACTION_STATUS_PENDING_TIME, actionBean);

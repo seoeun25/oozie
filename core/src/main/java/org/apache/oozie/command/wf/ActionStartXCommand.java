@@ -259,7 +259,9 @@ public class ActionStartXCommand extends ActionXCommand<org.apache.oozie.command
                         wfAction.setErrorInfo(START_DATA_MISSING, "Execution Started, but Start Data Missing from Action");
                         failJob(context);
                     } else {
-                        queue(new WorkflowNotificationXCommand(wfJob, wfAction));
+                        LOG.info("---- action start notify");
+                        notifyActionStatus(wfJob, wfAction);
+                        //queue(new WorkflowNotificationXCommand(wfJob, wfAction));
                     }
                 }
 

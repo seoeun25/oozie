@@ -39,6 +39,7 @@ public class WorkflowNotificationXCommand extends NotificationXCommand {
         ParamChecker.notNull(workflow, "workflow");
         jobId = workflow.getId();
         url = workflow.getWorkflowInstance().getConf().get(OozieClient.WORKFLOW_NOTIFICATION_URL);
+        LOG.info("---- wf noti url 1 = " + url);
         if (url != null) {
             url = url.replaceAll(JOB_ID_PATTERN, workflow.getId());
             url = url.replaceAll(STATUS_PATTERN, workflow.getStatus().toString());
@@ -50,6 +51,7 @@ public class WorkflowNotificationXCommand extends NotificationXCommand {
             proxyConf = workflow.getWorkflowInstance().getConf()
                     .get(OozieClient.WORKFLOW_NOTIFICATION_PROXY, ConfigurationService.get(NOTIFICATION_PROXY_KEY));
             LOG.debug("Proxy :" + proxyConf);
+            LOG.info("---- wf noti url 2 = " + url);
         }
     }
 
@@ -59,6 +61,7 @@ public class WorkflowNotificationXCommand extends NotificationXCommand {
         ParamChecker.notNull(action, "action");
         jobId = action.getId();
         url = workflow.getWorkflowInstance().getConf().get(OozieClient.ACTION_NOTIFICATION_URL);
+        LOG.info("---- wf action noti url 1 = " + url);
         if (url != null) {
             url = url.replaceAll(JOB_ID_PATTERN, workflow.getId());
             url = url.replaceAll(NODE_NAME_PATTERN, action.getName());
@@ -71,6 +74,7 @@ public class WorkflowNotificationXCommand extends NotificationXCommand {
             proxyConf = workflow.getWorkflowInstance().getConf()
                     .get(OozieClient.WORKFLOW_NOTIFICATION_PROXY, ConfigurationService.get(NOTIFICATION_PROXY_KEY));
             LOG.debug("Proxy :" + proxyConf);
+            //LOG.info("---- wf action noti url 2 = " + url);
         }
     }
 

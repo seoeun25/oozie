@@ -18,15 +18,20 @@
 
 package org.apache.oozie.command.coord;
 
+import java.io.IOException;
+import java.io.StringReader;
 import java.util.Date;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.AppType;
+import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.command.XCommand;
 import org.apache.oozie.coord.CoordELFunctions;
 import org.apache.oozie.event.CoordinatorActionEvent;
 import org.apache.oozie.event.CoordinatorJobEvent;
+import org.apache.oozie.util.XConfiguration;
 
 /**
  * Abstract coordinator command class derived from XCommand
@@ -83,6 +88,21 @@ public abstract class CoordinatorXCommand<T> extends XCommand<T> {
                     coordJob.getStatus(), coordJob.getUser(), coordJob.getAppName(), coordJob.getStartTime(),
                     coordJob.getEndTime());
             eventService.queueEvent(event);
+        }
+    }
+
+    protected void notifyCoordActionStatus(CoordinatorActionBean coordActionBean) {
+        Configuration conf = null;
+        try {
+            conf = new XConfiguration(new StringReader(coordActionBean.getRunConf()));
+        }
+        catch (IOException e1) {
+            LOG.warn("Configuration parse error. :" + coordActionBean.getRunConf());
+            return;
+        }
+        String url = conf.get(OozieClient.COORD_ACTION_NOTIFICATION_URL);
+        if (url != null) {
+            queue(new CoordActionNotificationXCommand(coordActionBean), 100);
         }
     }
 

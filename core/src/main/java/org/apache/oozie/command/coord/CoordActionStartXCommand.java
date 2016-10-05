@@ -231,7 +231,7 @@ public class CoordActionStartXCommand extends CoordinatorXCommand<Void> {
                             CoordActionQuery.UPDATE_COORD_ACTION_FOR_START, coordAction));
                     try {
                         executor.executeBatchInsertUpdateDelete(insertList, updateList, null);
-                        queue(new CoordActionNotificationXCommand(coordAction), 100);
+                        notifyCoordActionStatus(coordAction);
                         if (EventHandlerService.isEnabled()) {
                             generateEvent(coordAction, user, appName, wfJob.getStartTime());
                         }

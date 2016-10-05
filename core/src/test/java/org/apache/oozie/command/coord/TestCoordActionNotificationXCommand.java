@@ -18,51 +18,97 @@
 
 package org.apache.oozie.command.coord;
 
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.util.StringUtils;
 import org.apache.oozie.CoordinatorActionBean;
+import org.apache.oozie.CoordinatorJobBean;
+import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.client.CoordinatorAction;
+import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.command.NotificationXCommand;
 import org.apache.oozie.command.wf.HangServlet;
-import org.apache.oozie.command.wf.WorkflowNotificationXCommand;
+import org.apache.oozie.executor.jpa.CoordActionGetJPAExecutor;
+import org.apache.oozie.executor.jpa.WorkflowActionsGetForJobJPAExecutor;
+import org.apache.oozie.local.LocalOozie;
+import org.apache.oozie.service.CallableQueueService;
+import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
-import org.apache.oozie.test.EmbeddedServletContainer;
-import org.apache.oozie.test.XTestCase;
+import org.apache.oozie.service.XLogService;
+import org.apache.oozie.test.XDataTestCase;
+import org.apache.oozie.util.DateUtils;
 import org.apache.oozie.util.XConfiguration;
 import org.junit.Assert;
 import org.mockito.Mockito;
 
-public class TestCoordActionNotificationXCommand extends XTestCase {
-    private EmbeddedServletContainer container;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+
+public class TestCoordActionNotificationXCommand extends XDataTestCase {
+    private XConfiguration jobConfiguration = new XConfiguration();
 
     @Override
     public void setUp() throws Exception {
         super.setUp();
+        jobConfiguration.clear();
+        setSystemProperty(XLogService.LOG4J_FILE, "oozie-log4j.properties");
         setSystemProperty(NotificationXCommand.NOTIFICATION_URL_CONNECTION_TIMEOUT_KEY, "50");
-        Services services = new Services();
-        services.init();
-        container = new EmbeddedServletContainer("blah");
-        container.addServletEndpoint("/hang/*", HangServlet.class);
-        container.start();
+        LocalOozie.start("/hang/*", HangServlet.class, "/notification/*", NotificationServlet.class);
     }
 
     @Override
     public void tearDown() throws Exception {
-        try {
-            container.stop();
-        }
-        catch (Exception ex) {
-        }
-        try {
-            Services.get().destroy();
-        }
-        catch (Exception ex) {
-        }
+        LocalOozie.stop();
         super.tearDown();
+    }
+
+    public static class NotificationServlet extends HttpServlet {
+        public static volatile String ACTION_ID = null;
+        public static volatile String STATUS = null;
+
+        public static List<String> history = Collections.synchronizedList(new ArrayList<String>());
+
+        public static void reset() {
+            ACTION_ID = null;
+            STATUS = null;
+            history.clear();
+        }
+
+        @Override
+        protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+            String actionId = req.getParameter("actionId");
+            String status = req.getParameter("status");
+            history.add(new NotificationEntity(actionId, status).toString());
+            ACTION_ID = actionId;
+            STATUS = status;
+            resp.setStatus(HttpServletResponse.SC_OK);
+        }
+    }
+
+    private static class NotificationEntity {
+        private String actionId;
+        private String status;
+        public NotificationEntity(String actionId, String status) {
+            this.actionId = actionId;
+            this.status = status;
+        }
+        public String toString() {
+            return StringUtils.join(",", new String[]{actionId, status});
+        }
     }
 
     public void testCoordNotificationTimeout() throws Exception {
         XConfiguration conf = new XConfiguration();
-        conf.set(OozieClient.COORD_ACTION_NOTIFICATION_URL, container.getServletURL("/hang/*"));
+        conf.set(OozieClient.COORD_ACTION_NOTIFICATION_URL, LocalOozie.getServletURL("/hang/*"));
         String runConf = conf.toXmlString(false);
         CoordinatorActionBean coord = Mockito.mock(CoordinatorActionBean.class);
         Mockito.when(coord.getId()).thenReturn("1");
@@ -75,5 +121,84 @@ public class TestCoordActionNotificationXCommand extends XTestCase {
         long end = System.currentTimeMillis();
         Assert.assertTrue(end - start >= 50);
         Assert.assertTrue(end - start <= 10000);
+    }
+
+    public void testQueueNotificationCommand() throws Exception {
+        NotificationServlet.reset();
+        jobConfiguration.set(OozieClient.COORD_ACTION_NOTIFICATION_URL,
+                LocalOozie.getServletURL("/notification") + "/coord?actionId=$actionId&status=$status");
+        _testQueueNotificationCommand(1);
+    }
+
+    public void testSkipNotificationCommand() throws Exception {
+        NotificationServlet.reset();
+        _testQueueNotificationCommand(0);
+    }
+
+    private void _testQueueNotificationCommand(int expectedQueuingCommand) throws Exception{
+        Date start = DateUtils.parseDateOozieTZ("2009-12-15T01:00Z");
+        Date end = DateUtils.parseDateOozieTZ("2009-12-16T01:00Z");
+        CoordinatorJobBean coordJob = addRecordToCoordJobTable(CoordinatorJob.Status.RUNNING, start, end, false, false, 1);
+
+        CoordinatorActionBean action = addRecordToCoordActionTable(coordJob.getId(), 1,
+                CoordinatorAction.Status.SUBMITTED, "coord-action-start-escape-strings.xml", 0);
+
+        String actionId = action.getId();
+        new CoordActionStartXCommand(actionId, getTestUser(), "myapp", "myjob").call();
+
+        final JPAService jpaService = Services.get().get(JPAService.class);
+        action = jpaService.execute(new CoordActionGetJPAExecutor(actionId));
+
+        if (action.getStatus() == CoordinatorAction.Status.SUBMITTED) {
+            fail("CoordActionStartCommand didn't work because the status for action id" + actionId + " is :"
+                    + action.getStatus() + " expected to be NOT SUBMITTED (i.e. RUNNING)");
+        }
+
+        final String wfId = action.getExternalId();
+
+        waitFor(3 * 1000, new Predicate() {
+            public boolean evaluate() throws Exception {
+                List<WorkflowActionBean> wfActions = jpaService.execute(new WorkflowActionsGetForJobJPAExecutor(wfId));
+                return wfActions.size() > 0;
+            }
+        });
+        List<WorkflowActionBean> wfActions = jpaService.execute(new WorkflowActionsGetForJobJPAExecutor(wfId));
+        assertTrue(wfActions.size() > 0);
+
+        final CallableQueueService callableQueueService = Services.get().get(CallableQueueService.class);
+        Assert.assertEquals(expectedQueuingCommand, callableQueueService.getQueueDump().size());
+        // wait until all commands are executed.
+        waitFor(3 * 1000, new Predicate() {
+            @Override
+            public boolean evaluate() throws Exception {
+                return callableQueueService.getQueueDump().size() == 0;
+            }
+        });
+
+        Assert.assertEquals(expectedQueuingCommand, NotificationServlet.history.size());
+
+    }
+
+    protected Configuration getCoordConf(Path appPath) throws IOException {
+        Path wfAppPath = new Path(getFsTestCaseDir(), "coord");
+
+        Configuration jobConf = new XConfiguration();
+        jobConf.set(OozieClient.COORDINATOR_APP_PATH, appPath.toString());
+        jobConf.set(OozieClient.USER_NAME, getTestUser());
+        jobConf.set("jobTracker", getJobTrackerUri());
+        jobConf.set("nameNode", getNameNodeUri());
+        jobConf.set("wfAppPath", wfAppPath.toString());
+        if (jobConfiguration.size() > 0) {
+            for (Map.Entry<String, String> entry: jobConfiguration) {
+                jobConf.set(entry.getKey(), entry.getValue());
+            }
+        }
+
+        String content = "<workflow-app xmlns='uri:oozie:workflow:0.1'  xmlns:sla='uri:oozie:sla:0.1' name='no-op-wf'>";
+        content += "<start to='end' />";
+        content += "<end name='end' /></workflow-app>";
+        writeToFile(content, wfAppPath, "workflow.xml");
+
+        return jobConf;
     }
 }

@@ -371,7 +371,7 @@ public class CoordRerunXCommand extends RerunTransitionXCommand<CoordinatorActio
                         if (SLAService.isEnabled()) {
                             SLAOperations.updateRegistrationEvent(coordAction.getId());
                         }
-                        queue(new CoordActionNotificationXCommand(coordAction), 100);
+                        notifyCoordActionStatus(coordAction);
                         queue(new CoordActionInputCheckXCommand(coordAction.getId(), coordAction.getJobId()), 100);
                         if (coordAction.getPushMissingDependencies() != null) {
                             queue(new CoordPushDependencyCheckXCommand(coordAction.getId(), true), 100);

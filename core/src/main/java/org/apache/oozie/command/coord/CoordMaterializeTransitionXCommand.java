@@ -143,7 +143,7 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
                     }
 
                     // TODO: time 100s should be configurable
-                    queue(new CoordActionNotificationXCommand(coordAction), 100);
+                    notifyCoordActionStatus(coordAction);
 
                     //Delay for input check = (nominal time - now)
                     long checkDelay = coordAction.getNominalTime().getTime() - new Date().getTime();
