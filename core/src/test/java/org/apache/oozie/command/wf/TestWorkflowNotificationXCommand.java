@@ -221,17 +221,37 @@ public class TestWorkflowNotificationXCommand extends XDataTestCase {
         jobConfiguration.clear();
         jobConfiguration.set(OozieClient.WORKFLOW_NOTIFICATION_URL,
                 "notification/wf?jobId=$jobId&status=$status");
-        testActionSumbit(3); //wf.notification(2) / action.start
+        jobConfiguration.set(OozieClient.ACTION_NOTIFICATION_URL,
+                "notification/wf?jobId=$jobId&nodeName=$nodeName&status=$status");
+
+        // job.notification(RUNNING)
+        // action.notification (start:T:end), action.start (end)
+        // action.notification (end:T:null), job.notification(SUCCEED)
+        testActionSumbit(5 + 2);
     }
 
     public void testQueueNotificationCommand2() throws Exception {
         jobConfiguration.clear();
-//        jobConfiguration.set(OozieClient.WORKFLOW_NOTIFICATION_URL,
-//                "notification/wf?jobId=$jobId&status=$status");
+        jobConfiguration.set(OozieClient.WORKFLOW_NOTIFICATION_URL,
+                "notification/wf?jobId=$jobId&status=$status");
+
+        // job.notification(RUNNING)
+        // action.start (end)
+        // job.notification(SUCCEED)
+        testActionSumbit(3);
+    }
+
+    public void testQueueNotificationCommand3() throws Exception {
+        jobConfiguration.clear();
         jobConfiguration.set(OozieClient.ACTION_NOTIFICATION_URL,
                 "notification/wf?jobId=$jobId&nodeName=$nodeName&status=$status");
-        testActionSumbit(3); //action.notification(2),  / action.start
+
+        // action.notification (start:T:end), action.start (end)
+        // action.notification (end:T:null)
+        testActionSumbit(3 + 1);
     }
+
+
 
     public void testSkipNotificationCommand() throws Exception {
         //testActionStart(0);
