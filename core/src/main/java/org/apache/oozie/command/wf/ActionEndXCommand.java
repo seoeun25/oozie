@@ -65,8 +65,6 @@ public class ActionEndXCommand extends ActionXCommand<Void> {
 
     private String jobId = null;
     private String actionId = null;
-    private WorkflowJobBean wfJob = null;
-    private WorkflowActionBean wfAction = null;
     private JPAService jpaService = null;
     private ActionExecutor executor = null;
     private List<UpdateEntry> updateList = new ArrayList<UpdateEntry>();

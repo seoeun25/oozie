@@ -100,17 +100,17 @@ public abstract class WorkflowXCommand<T> extends XCommand<T> {
         }
     }
 
-    protected void notifyWorkflowStatus(WorkflowJobBean jobBean) {
-        String url = jobBean.getWorkflowInstance().getConf().get(OozieClient.WORKFLOW_NOTIFICATION_URL);
-        if (url != null) {
-            queue(new WorkflowNotificationXCommand(jobBean));
-        }
-    }
+//    protected void notifyWorkflowStatus(WorkflowJobBean jobBean) {
+//        String url = jobBean.getWorkflowInstance().getConf().get(OozieClient.WORKFLOW_NOTIFICATION_URL);
+//        if (url != null) {
+//            queue(new WorkflowNotificationXCommand(jobBean));
+//        }
+//    }
 
-    protected void notifyActionStatus(WorkflowJobBean jobBean, WorkflowActionBean actionBean) {
-        String url = jobBean.getWorkflowInstance().getConf().get(OozieClient.ACTION_NOTIFICATION_URL);
-        if (url != null) {
-            queue(new WorkflowNotificationXCommand(jobBean, actionBean), 0);
-        }
-    }
+//    protected void notifyActionStatus(WorkflowJobBean jobBean, WorkflowActionBean actionBean) {
+//        String url = jobBean.getWorkflowInstance().getConf().get(OozieClient.ACTION_NOTIFICATION_URL);
+//        if (url != null) {
+//            queue(new WorkflowNotificationXCommand(jobBean, actionBean), 0);
+//        }
+//    }
 }

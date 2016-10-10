@@ -32,6 +32,7 @@ import org.apache.oozie.service.XLogService;
 import org.apache.oozie.servlet.CallbackServlet;
 import org.apache.oozie.test.EmbeddedServletContainer;
 import org.apache.oozie.util.ParamChecker;
+import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XLog;
 
 import java.util.HashMap;
@@ -53,10 +54,14 @@ public class LocalOozie {
     public synchronized static void start() throws Exception {
         Map<String, Class> servletMap = new HashMap<>();
         servletMap.put("/callback", CallbackServlet.class);
-        start(servletMap);
+        start(new XConfiguration(), servletMap);
     }
 
     public synchronized static void start(Object... servletPathAndClass) throws Exception {
+        start(new XConfiguration(), servletPathAndClass);
+    }
+
+    public synchronized static void start(XConfiguration configuration, Object... servletPathAndClass) throws Exception {
         if ((servletPathAndClass.length % 2) != 0) {
             throw new IllegalArgumentException("Servlet path should be pair with class");
         }
@@ -66,7 +71,7 @@ public class LocalOozie {
             Class claz = (Class) servletPathAndClass[i+1];
             servletPathClassMap.put(path, claz);
         }
-        start(servletPathClassMap);
+        start(configuration, servletPathClassMap);
     }
 
     /**
@@ -75,7 +80,7 @@ public class LocalOozie {
      * @param servletPathClassMap the pair of servletPath and servletClass.
      * @throws Exception if LocalOozie could not be started.
      */
-    public synchronized static void start(Map<String,Class> servletPathClassMap) throws Exception {
+    public synchronized static void start(XConfiguration configuration, Map<String,Class> servletPathClassMap) throws Exception {
         if (localOozieActive) {
             throw new IllegalStateException("LocalOozie is already initialized");
         }
@@ -89,7 +94,11 @@ public class LocalOozie {
         }
 
         localOozieActive = true;
-        new Services().init();
+        Services services = new Services();
+        for (Map.Entry<String, String> entry: configuration) {
+            services.get(ConfigurationService.class).getConf().set(entry.getKey(), entry.getValue());
+        }
+        services.init();
 
         if (log4jFile != null) {
             System.setProperty(XLogService.LOG4J_FILE, log4jFile);

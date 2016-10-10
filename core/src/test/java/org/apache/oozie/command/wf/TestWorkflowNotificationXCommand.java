@@ -28,37 +28,28 @@ import org.apache.hadoop.mapred.RunningJob;
 import org.apache.hadoop.util.StringUtils;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
-import org.apache.oozie.action.hadoop.LauncherMapperHelper;
 import org.apache.oozie.action.hadoop.MapReduceActionExecutor;
 import org.apache.oozie.action.hadoop.MapperReducerForTest;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.command.NotificationXCommand;
-import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.WorkflowActionGetJPAExecutor;
-import org.apache.oozie.executor.jpa.WorkflowActionInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowActionQueryExecutor;
-import org.apache.oozie.executor.jpa.WorkflowJobInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor;
 import org.apache.oozie.local.LocalOozie;
 import org.apache.oozie.service.CallableQueueService;
-import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.HadoopAccessorService;
 import org.apache.oozie.service.InstrumentationService;
 import org.apache.oozie.service.JPAService;
-import org.apache.oozie.service.PurgeService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.UUIDService;
-import org.apache.oozie.service.WorkflowAppService;
 import org.apache.oozie.service.XLogService;
 import org.apache.oozie.test.EmbeddedServletContainer;
 import org.apache.oozie.test.XDataTestCase;
-import org.apache.oozie.test.XTestCase;
 import org.apache.oozie.util.Instrumentation;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XmlUtils;
-import org.apache.oozie.workflow.WorkflowApp;
 import org.apache.oozie.workflow.WorkflowInstance;
 import org.junit.Assert;
 import org.mockito.Mockito;
@@ -69,23 +60,20 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
-import java.io.StringReader;
 import java.io.Writer;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
 public class TestWorkflowNotificationXCommand extends XDataTestCase {
-    private EmbeddedServletContainer container;
-    private XConfiguration jobConfiguration = new XConfiguration();
+    private XConfiguration jobConf = new XConfiguration();
 
     public static class CallbackServlet extends HttpServlet {
         public static volatile String JOB_ID = null;
@@ -138,29 +126,14 @@ public class TestWorkflowNotificationXCommand extends XDataTestCase {
         super.setUp();
         setSystemProperty(XLogService.LOG4J_FILE, "oozie-log4j.properties");
         setSystemProperty(NotificationXCommand.NOTIFICATION_URL_CONNECTION_TIMEOUT_KEY, "50");
-        Services services = new Services();
-        setClassesToBeExcluded(services.get(ConfigurationService.class).getConf(), new String[]{PurgeService.class.getName()});
-        services.init();
-        container = new EmbeddedServletContainer("blah");
-        container.addServletEndpoint("/hang/*", HangServlet.class);
-        //LocalOozie.start("/hang/*", HangServlet.class, "/notification/*", CallbackServlet.class);
+        LocalOozie.start(new XConfiguration(), "/hang/*", HangServlet.class, "/notification/*", CallbackServlet.class);
         CallbackServlet.reset();
-        jobConfiguration.clear();
+        jobConf.clear();
     }
 
     @Override
     public void tearDown() throws Exception {
-        try {
-            container.stop();
-        }
-        catch (Exception ex) {
-        }
-        try {
-            Services.get().destroy();
-        }
-        catch (Exception ex) {
-        }
-        //LocalOozie.stop();
+        LocalOozie.stop();
         super.tearDown();
     }
 
@@ -217,89 +190,112 @@ public class TestWorkflowNotificationXCommand extends XDataTestCase {
         Assert.assertEquals(expectedParentId, CallbackServlet.PARENT_ID);
     }
 
+    /**
+     * Test : WORKFLOW_NOTIFICATION_URL and ACTION_NOTIFICATION_URL notifications are configured.
+     * @throws Exception
+     */
     public void testQueueNotificationCommand1() throws Exception {
-        jobConfiguration.clear();
-        jobConfiguration.set(OozieClient.WORKFLOW_NOTIFICATION_URL,
-                "notification/wf?jobId=$jobId&status=$status");
-        jobConfiguration.set(OozieClient.ACTION_NOTIFICATION_URL,
-                "notification/wf?jobId=$jobId&nodeName=$nodeName&status=$status");
+        LocalOozie.stop();
+        XConfiguration configuration = new XConfiguration();
+        configuration.set(NotificationXCommand.NOTIFICATION_URL_CONNECTION_TIMEOUT_KEY, "10000");
+        LocalOozie.start(configuration, "/hang/*", HangServlet.class, "/notification/*", CallbackServlet.class);
+        CallbackServlet.reset();
+
+        jobConf.clear();
+        jobConf.set(OozieClient.WORKFLOW_NOTIFICATION_URL,
+                LocalOozie.getServletURL("/notification") + "/wf?jobId=$jobId&status=$status");
+        jobConf.set(OozieClient.ACTION_NOTIFICATION_URL,
+                LocalOozie.getServletURL("/notification") + "/wf?jobId=$jobId&nodeName=$nodeName&status=$status");
 
         // job.notification(RUNNING)
         // action.notification (start:T:end), action.start (end)
         // action.notification (end:T:null), job.notification(SUCCEED)
-        testActionSumbit(5 + 2);
+        String jobId = testActionSumbit(5 + 2); // 2 is for CompositeCallable
+
+        for (String notification : CallbackServlet.history) {
+            System.out.println("notification history = " + notification);
+        }
+        assertEquals(4, CallbackServlet.history.size());
+        List<String> expectedNotification = Arrays.asList(jobId + ",null,RUNNING", jobId + ",:start:,T:end",
+                jobId + ",end,T:null", jobId + ",null,SUCCEEDED");
+        for (String notification: CallbackServlet.history) {
+            assertTrue(expectedNotification.contains(notification));
+        }
     }
 
+    /**
+     * Test : WORKFLOW_NOTIFICATION_URL notifications are configured.
+     * @throws Exception
+     */
     public void testQueueNotificationCommand2() throws Exception {
-        jobConfiguration.clear();
-        jobConfiguration.set(OozieClient.WORKFLOW_NOTIFICATION_URL,
-                "notification/wf?jobId=$jobId&status=$status");
+        LocalOozie.stop();
+        XConfiguration configuration = new XConfiguration();
+        configuration.set(NotificationXCommand.NOTIFICATION_URL_CONNECTION_TIMEOUT_KEY, "10000");
+        configuration.set(NotificationXCommand.NOTIFICATION_MAX_RETRIES, "0");
+        LocalOozie.start(configuration, "/hang/*", HangServlet.class, "/notification/*", CallbackServlet.class);
+        CallbackServlet.reset();
+        jobConf.clear();
+        jobConf.set(OozieClient.WORKFLOW_NOTIFICATION_URL,
+                LocalOozie.getServletURL("/notification") + "/wf?jobId=$jobId&status=$status");
 
         // job.notification(RUNNING)
         // action.start (end)
         // job.notification(SUCCEED)
-        testActionSumbit(3);
-    }
-
-    public void testQueueNotificationCommand3() throws Exception {
-        jobConfiguration.clear();
-        jobConfiguration.set(OozieClient.ACTION_NOTIFICATION_URL,
-                "notification/wf?jobId=$jobId&nodeName=$nodeName&status=$status");
-
-        // action.notification (start:T:end), action.start (end)
-        // action.notification (end:T:null)
-        testActionSumbit(3 + 1);
-    }
-
-
-
-    public void testSkipNotificationCommand() throws Exception {
-        //testActionStart(0);
-        testActionSumbit(1); // action.start
-    }
-
-    public void testActionStart(int expectedQueuingCommand) throws Exception {
-        JPAService jpaService = Services.get().get(JPAService.class);
-        WorkflowJobBean job = this.addRecordToWfJobTable(WorkflowJob.Status.RUNNING, WorkflowInstance.Status.RUNNING);
-        WorkflowActionBean action = this.addRecordToWfActionTable(job.getId(), "1", WorkflowAction.Status.PREP, true);
-        WorkflowActionGetJPAExecutor wfActionGetCmd = new WorkflowActionGetJPAExecutor(action.getId());
-
-        new ActionStartXCommand(action.getId(), "map-reduce").call();
-        action = jpaService.execute(wfActionGetCmd);
-        assertNotNull(action.getExternalId());
-
-        ActionXCommand.ActionExecutorContext context = new ActionXCommand.ActionExecutorContext(job, action, false, false);
-        MapReduceActionExecutor actionExecutor = new MapReduceActionExecutor();
-        JobConf conf = actionExecutor.createBaseHadoopConf(context, XmlUtils.parseXml(action.getConf()));
-        String user = conf.get("user.name");
-        JobClient jobClient = Services.get().get(HadoopAccessorService.class).createJobClient(user, conf);
-
-        String launcherId = action.getExternalId();
-        final RunningJob launcherJob = jobClient.getJob(JobID.forName(launcherId));
-
-        waitFor(120 * 1000, new Predicate() {
-            public boolean evaluate() throws Exception {
-                return launcherJob.isComplete();
-            }
-        });
-        assertTrue(launcherJob.isSuccessful());
-
-        InstrumentationService instrumentationService = Services.get().get(InstrumentationService.class);
-        Map<String, Map<String, Instrumentation.Element<Long>>> map = instrumentationService.get().getCounters();
-        if (expectedQueuingCommand > 0) {
-            assertTrue(map.containsKey("callablequeue"));
-            Map<String, Instrumentation.Element<Long>> queueInstrumentation = map.get("callablequeue");
-            assertTrue(queueInstrumentation.containsKey("queued"));
-            long queued = queueInstrumentation.get("queued").getValue();
-            assertEquals(expectedQueuingCommand, queued);
-            CallableQueueService callableQueueService = Services.get().get(CallableQueueService.class);
-            assertEquals(0, callableQueueService.getQueueDump().size());
-        } else {
-            assertFalse(map.containsKey("callablequeue"));
+        String jobId = testActionSumbit(3);
+        for (String notification : CallbackServlet.history) {
+            System.out.println("notification history = " + notification);
+        }
+        assertEquals(2, CallbackServlet.history.size());
+        List<String> expectedNotification = Arrays.asList(jobId + ",null,RUNNING", jobId + ",null,SUCCEEDED");
+        for (String notification: CallbackServlet.history) {
+            assertTrue(expectedNotification.contains(notification));
         }
     }
 
-    public void testActionSumbit(int expectedQueuingCommand) throws Exception {
+    /**
+     * Test : ACTION_NOTIFICATION_URL notifications are configured.
+     * @throws Exception
+     */
+    public void testQueueNotificationCommand3() throws Exception {
+        LocalOozie.stop();
+        XConfiguration configuration = new XConfiguration();
+        configuration.set(NotificationXCommand.NOTIFICATION_URL_CONNECTION_TIMEOUT_KEY, "10000");
+        LocalOozie.start(configuration, "/hang/*", HangServlet.class, "/notification/*", CallbackServlet.class);
+        CallbackServlet.reset();
+        jobConf.clear();
+        jobConf.set(OozieClient.ACTION_NOTIFICATION_URL,
+                LocalOozie.getServletURL("/notification") + "/wf?jobId=$jobId&nodeName=$nodeName&status=$status");
+
+        // action.notification (start:T:end), action.start (end)
+        // action.notification (end:T:null)
+        String jobId = testActionSumbit(3 + 1);
+        for (String notification : CallbackServlet.history) {
+            System.out.println("notification history = " + notification);
+        }
+        assertEquals(2, CallbackServlet.history.size());
+        List<String> expectedNotification = Arrays.asList(jobId + ",:start:,T:end", jobId + ",end,T:null");
+        for (String notification: CallbackServlet.history) {
+            assertTrue(expectedNotification.contains(notification));
+        }
+    }
+
+    /**
+     * Test : WORKFLOW_NOTIFICATION_URL and ACTION_NOTIFICATION_URL notifications are not configured.
+     * @throws Exception
+     */
+    public void testSkipNotificationCommand() throws Exception {
+        LocalOozie.stop();
+        XConfiguration configuration = new XConfiguration();
+        configuration.set(NotificationXCommand.NOTIFICATION_URL_CONNECTION_TIMEOUT_KEY, "10000");
+        LocalOozie.start(configuration, "/hang/*", HangServlet.class, "/notification/*", CallbackServlet.class);
+        CallbackServlet.reset();
+        jobConf.clear();
+
+        testActionSumbit(1); // action.start
+        assertEquals(0, CallbackServlet.history.size());
+    }
+
+    public String testActionSumbit(int expectedQueuingCommand) throws Exception {
         Configuration conf = new XConfiguration();
         String workflowUri = getTestCaseFileUri("workflow.xml");
         String appXml = "<workflow-app xmlns='uri:oozie:workflow:0.1' name='${appName}-foo'> " + "<start to='end' /> "
@@ -309,16 +305,14 @@ public class TestWorkflowNotificationXCommand extends XDataTestCase {
         conf.set(OozieClient.APP_PATH, workflowUri);
         conf.set(OozieClient.USER_NAME, getTestUser());
         conf.set("appName", "var-app-name");
-        if (jobConfiguration.size() > 0) {
-            for (Map.Entry<String, String> entry: jobConfiguration) {
+        if (jobConf.size() > 0) {
+            for (Map.Entry<String, String> entry: jobConf) {
                 conf.set(entry.getKey(), entry.getValue());
             }
         }
         SubmitXCommand sc = new SubmitXCommand(conf);
         final String jobId = sc.call();
         new StartXCommand(jobId).call();
-        System.out.println("----- wf status 1 = " + WorkflowJobQueryExecutor.getInstance().get(WorkflowJobQueryExecutor
-                .WorkflowJobQuery.GET_WORKFLOW, jobId).getStatus());
 
         waitFor(15 * 1000, new Predicate() {
             @Override
@@ -327,8 +321,6 @@ public class TestWorkflowNotificationXCommand extends XDataTestCase {
                         .getStatus() == WorkflowJob.Status.SUCCEEDED;
             }
         });
-        System.out.println("----- wf status 2 = " + WorkflowJobQueryExecutor.getInstance().get(WorkflowJobQueryExecutor
-                .WorkflowJobQuery.GET_WORKFLOW, jobId).getStatus());
         WorkflowJobBean wf = WorkflowJobQueryExecutor.getInstance().get(WorkflowJobQueryExecutor.WorkflowJobQuery.GET_WORKFLOW,
                 jobId);
         assertEquals(WorkflowJob.Status.SUCCEEDED, wf.getStatus());
@@ -347,8 +339,8 @@ public class TestWorkflowNotificationXCommand extends XDataTestCase {
         } else {
             assertFalse(map.containsKey("callablequeue"));
         }
+        return jobId;
     }
-
 
     protected Configuration getWFConf(Path appPath) {
         Configuration conf = new Configuration();
@@ -356,8 +348,8 @@ public class TestWorkflowNotificationXCommand extends XDataTestCase {
         conf.set(OozieClient.APP_PATH, appUri.toString());
         conf.set(OozieClient.LOG_TOKEN, "testToken");
         conf.set(OozieClient.USER_NAME, getTestUser());
-        if (jobConfiguration.size() > 0) {
-            for (Map.Entry<String,String> entry: jobConfiguration) {
+        if (jobConf.size() > 0) {
+            for (Map.Entry<String,String> entry: jobConf) {
                 conf.set(entry.getKey(), entry.getValue());
             }
         }
@@ -404,81 +396,6 @@ public class TestWorkflowNotificationXCommand extends XDataTestCase {
         action.setConf(actionXml);
 
         return action;
-    }
-
-//    public void testQueueNotificationCommand() throws Exception {
-//        _testQueueNotificationCommand(true, true, 6);
-//        _testQueueNotificationCommand(true, false, 2);
-//        _testQueueNotificationCommand(false, true, 4);
-//        _testQueueNotificationCommand(false, false, 0);
-//    }
-
-    public void _testQueueNotificationCommand(boolean notifyWorkflowStatus, boolean notifyActionStatus, int expectedNotification)
-            throws Exception {
-        CallbackServlet.reset();
-        final OozieClient wfClient = LocalOozie.getClient();
-        OutputStream os = new FileOutputStream(getTestCaseDir() + "/config-default.xml");
-        XConfiguration defaultConf = new XConfiguration();
-        defaultConf.set("outputDir", "default-output-dir");
-        defaultConf.writeXml(os);
-        os.close();
-
-        String workflowUri = getTestCaseFileUri("workflow.xml");
-        String actionXml = "<map-reduce>"
-                + "<job-tracker>${jobTracker}</job-tracker>"
-                + "<name-node>${nameNode}</name-node>"
-                + "        <prepare>"
-                + "          <delete path=\"${nameNode}/user/${wf:user()}/mr/${outputDir}\"/>"
-                + "        </prepare>"
-                + "        <configuration>"
-                + "          <property><name>bb</name><value>BB</value></property>"
-                + "          <property><name>cc</name><value>from_action</value></property>"
-                + "        </configuration>"
-                + "      </map-reduce>";
-        String wfXml = "<workflow-app xmlns=\"uri:oozie:workflow:0.5\" name=\"map-reduce-wf\">"
-                + "    <start to=\"mr-node\"/>"
-                + "    <action name=\"mr-node\">"
-                + actionXml
-                + "    <ok to=\"end\"/>"
-                + "    <error to=\"fail\"/>"
-                + "</action>"
-                + "<kill name=\"fail\">"
-                + "    <message>Map/Reduce failed, error message[${wf:errorMessage(wf:lastErrorNode())}]</message>"
-                + "</kill>"
-                + "<end name=\"end\"/>"
-                + "</workflow-app>";
-
-        writeToFile(wfXml, new File(URI.create(workflowUri)));
-        Configuration conf = new XConfiguration();
-        conf.set("nameNode", getNameNodeUri());
-        conf.set("jobTracker", getJobTrackerUri());
-        conf.set(OozieClient.APP_PATH, workflowUri);
-        conf.set(OozieClient.USER_NAME, getTestUser());
-        if (notifyWorkflowStatus) {
-            conf.set(OozieClient.WORKFLOW_NOTIFICATION_URL,
-                    LocalOozie.getServletURL("/notification") + "/wf?jobId=$jobId&status=$status");
-        }
-        if (notifyActionStatus) {
-            conf.set(OozieClient.ACTION_NOTIFICATION_URL,
-                    LocalOozie.getServletURL("/notification") + "/wf?jobId=$jobId&nodeName=$nodeName&status=$status");
-        }
-        SubmitXCommand sc = new SubmitXCommand(conf);
-        final String jobId = sc.call();
-        new StartXCommand(jobId).call();
-        waitFor(15 * 1000, new Predicate() {
-            public boolean evaluate() throws Exception {
-                return wfClient.getJobInfo(jobId).getStatus() == WorkflowJob.Status.KILLED;
-            }
-        });
-        String actionId = jobId + "@mr-node";
-        WorkflowActionBean action = WorkflowActionQueryExecutor.getInstance().get(WorkflowActionQueryExecutor.WorkflowActionQuery
-                .GET_ACTION, actionId);
-        Assert.assertEquals(WorkflowAction.Status.ERROR, action.getStatus());
-
-        for (int i = 0; i < CallbackServlet.history.size(); i++) {
-            System.out.println("history : " + CallbackServlet.history.get(i));
-        }
-        Assert.assertEquals(expectedNotification, CallbackServlet.history.size());
     }
 
 }

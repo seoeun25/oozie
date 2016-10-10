@@ -41,6 +41,7 @@ import org.apache.oozie.client.SLAEvent.Status;
 import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
+import org.apache.oozie.command.XCommand;
 import org.apache.oozie.executor.jpa.BatchQueryExecutor.UpdateEntry;
 import org.apache.oozie.executor.jpa.BatchQueryExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
@@ -70,8 +71,6 @@ public class ActionStartXCommand extends ActionXCommand<org.apache.oozie.command
 
     private String jobId = null;
     protected String actionId = null;
-    protected WorkflowJobBean wfJob = null;
-    protected WorkflowActionBean wfAction = null;
     private JPAService jpaService = null;
     private ActionExecutor executor = null;
     private List<UpdateEntry> updateList = new ArrayList<UpdateEntry>();
@@ -260,8 +259,8 @@ public class ActionStartXCommand extends ActionXCommand<org.apache.oozie.command
                         failJob(context);
                     } else {
                         LOG.info("---- action start notify");
-                        notifyActionStatus(wfJob, wfAction);
-                        //queue(new WorkflowNotificationXCommand(wfJob, wfAction));
+                        //notifyActionStatus(wfJob, wfAction);
+                        queue(new WorkflowNotificationXCommand(wfJob, wfAction));
                     }
                 }
 

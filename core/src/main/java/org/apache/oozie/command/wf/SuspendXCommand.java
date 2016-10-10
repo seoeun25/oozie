@@ -21,9 +21,11 @@ package org.apache.oozie.command.wf;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
+import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
+import org.apache.oozie.command.XCommand;
 import org.apache.oozie.executor.jpa.BatchQueryExecutor;
 import org.apache.oozie.executor.jpa.BatchQueryExecutor.UpdateEntry;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
@@ -212,5 +214,15 @@ public class SuspendXCommand extends WorkflowXCommand<Void> {
     @Override
     protected void verifyPrecondition() throws CommandException, PreconditionException {
         eagerVerifyPrecondition();
+    }
+
+    protected void submissionVerifyPrecondition(XCommand<?> command ) throws CommandException {
+        if (command instanceof WorkflowNotificationXCommand) {
+            WorkflowNotificationXCommand notificationXCommand = (WorkflowNotificationXCommand) command;
+            if (notificationXCommand.getName().equals("job.notification") &&
+                    wfJobBean.getWorkflowInstance().getConf().get(OozieClient.WORKFLOW_NOTIFICATION_URL) == null) {
+                throw new CommandException(ErrorCode.E0401, OozieClient.WORKFLOW_NOTIFICATION_URL);
+            }
+        }
     }
 }

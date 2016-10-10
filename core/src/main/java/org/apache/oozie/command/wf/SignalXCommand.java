@@ -38,6 +38,7 @@ import org.apache.oozie.ErrorCode;
 import org.apache.oozie.XException;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
+import org.apache.oozie.command.XCommand;
 import org.apache.oozie.command.wf.ActionXCommand.ActionExecutorContext;
 import org.apache.oozie.command.wf.ActionXCommand.ForkedActionExecutorContext;
 import org.apache.oozie.executor.jpa.BatchQueryExecutor.UpdateEntry;
@@ -195,8 +196,8 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
                 // 2. Add SLA registration events for all WF_ACTIONS
                 createSLARegistrationForAllActions(workflowInstance.getApp().getDefinition(), wfJob.getUser(),
                         wfJob.getGroup(), wfJob.getConf());
-                notifyWorkflowStatus(wfJob);
-                //queue(new WorkflowNotificationXCommand(wfJob));
+                //notifyWorkflowStatus(wfJob);
+                queue(new WorkflowNotificationXCommand(wfJob));
             }
             else {
                 throw new CommandException(ErrorCode.E0801, wfJob.getId());
@@ -222,8 +223,8 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
             if (!skipAction) {
                 wfAction.setTransition(workflowInstance.getTransition(wfAction.getName()));
                 LOG.info("---- notifyActionStatus");
-                notifyActionStatus(wfJob, wfAction);
-                //queue(new WorkflowNotificationXCommand(wfJob, wfAction));
+                //notifyActionStatus(wfJob, wfAction);
+                queue(new WorkflowNotificationXCommand(wfJob, wfAction));
             }
             updateList.add(new UpdateEntry<WorkflowActionQuery>(WorkflowActionQuery.UPDATE_ACTION_PENDING_TRANS,
                     wfAction));
@@ -257,8 +258,8 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
                         wfJobErrorCode = actionToFail.getErrorCode();
                         wfJobErrorMsg = actionToFail.getErrorMessage();
                     }
-                    notifyActionStatus(wfJob, actionToFail);
-                    //queue(new WorkflowNotificationXCommand(wfJob, actionToFail));
+                    //notifyActionStatus(wfJob, actionToFail);
+                    queue(new WorkflowNotificationXCommand(wfJob, actionToFail));
                     SLAEventBean slaEvent = SLADbXOperations.createStatusEvent(wfAction.getSlaXml(), wfAction.getId(),
                             Status.FAILED, SlaAppType.WORKFLOW_ACTION);
                     if (slaEvent != null) {
@@ -294,8 +295,8 @@ public class SignalXCommand extends WorkflowXCommand<Void> {
             if (slaEvent != null) {
                 insertList.add(slaEvent);
             }
-            //queue(new WorkflowNotificationXCommand(wfJob));
-            notifyWorkflowStatus(wfJob);
+            queue(new WorkflowNotificationXCommand(wfJob));
+            //notifyWorkflowStatus(wfJob);
             if (wfJob.getStatus() == WorkflowJob.Status.SUCCEEDED) {
                 InstrumentUtils.incrJobCounter(INSTR_SUCCEEDED_JOBS_COUNTER_NAME, 1, getInstrumentation());
             }
@@ -673,5 +674,18 @@ private boolean checkForSuspendNode(List<WorkflowActionBean> workflowActionBeanL
     return false;
 }
 
+    protected void submissionVerifyPrecondition(XCommand<?> command ) throws CommandException {
+        if (command instanceof WorkflowNotificationXCommand) {
+            WorkflowNotificationXCommand notificationXCommand = (WorkflowNotificationXCommand) command;
+            if (notificationXCommand.getName().equals("job.notification") &&
+                    wfJob.getWorkflowInstance().getConf().get(OozieClient.WORKFLOW_NOTIFICATION_URL) == null) {
+                throw new CommandException(ErrorCode.E0401, OozieClient.WORKFLOW_NOTIFICATION_URL);
+            }
+            if (notificationXCommand.getName().equals("action.notification") &&
+                    wfJob.getWorkflowInstance().getConf().get(OozieClient.ACTION_NOTIFICATION_URL) == null) {
+                throw new CommandException(ErrorCode.E0401, OozieClient.ACTION_NOTIFICATION_URL);
+            }
+        }
+    }
 
 }
