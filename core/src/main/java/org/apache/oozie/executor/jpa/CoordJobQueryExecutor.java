@@ -311,6 +311,7 @@ public class CoordJobQueryExecutor extends QueryExecutor<CoordinatorJobBean, Coo
                 bean.setGroup((String) arr[2]);
                 bean.setAppName((String) arr[3]);
                 bean.setStatusStr((String) arr[4]);
+                bean.setConfBlob((StringBlob) arr[5]);
                 break;
             case GET_COORD_JOB_MATERIALIZE:
                 bean = new CoordinatorJobBean();

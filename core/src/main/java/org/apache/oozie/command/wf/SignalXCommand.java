@@ -38,6 +38,7 @@ import org.apache.oozie.ErrorCode;
 import org.apache.oozie.XException;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
+import org.apache.oozie.command.XCommand;
 import org.apache.oozie.command.wf.ActionXCommand.ActionExecutorContext;
 import org.apache.oozie.command.wf.ActionXCommand.ForkedActionExecutorContext;
 import org.apache.oozie.executor.jpa.BatchQueryExecutor.UpdateEntry;
@@ -668,5 +669,18 @@ private boolean checkForSuspendNode(List<WorkflowActionBean> workflowActionBeanL
     return false;
 }
 
+    protected void submissionVerifyPrecondition(XCommand<?> command ) throws CommandException {
+        if (command instanceof WorkflowNotificationXCommand) {
+            WorkflowNotificationXCommand notificationXCommand = (WorkflowNotificationXCommand) command;
+            if (notificationXCommand.getName().equals("job.notification") &&
+                    wfJob.getWorkflowInstance().getConf().get(OozieClient.WORKFLOW_NOTIFICATION_URL) == null) {
+                throw new CommandException(ErrorCode.E0401, OozieClient.WORKFLOW_NOTIFICATION_URL);
+            }
+            if (notificationXCommand.getName().equals("action.notification") &&
+                    wfJob.getWorkflowInstance().getConf().get(OozieClient.ACTION_NOTIFICATION_URL) == null) {
+                throw new CommandException(ErrorCode.E0401, OozieClient.ACTION_NOTIFICATION_URL);
+            }
+        }
+    }
 
 }

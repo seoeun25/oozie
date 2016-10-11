@@ -18,13 +18,18 @@
 
 package org.apache.oozie.command.coord;
 
+import java.io.IOException;
+import java.io.StringReader;
 import java.util.Date;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.ErrorCode;
 import org.apache.oozie.client.CoordinatorAction;
+import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
+import org.apache.oozie.command.XCommand;
 import org.apache.oozie.executor.jpa.CoordActionGetForTimeoutJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordActionQueryExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
@@ -34,6 +39,7 @@ import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.ParamChecker;
+import org.apache.oozie.util.XConfiguration;
 
 /**
  * This class sets a Coordinator action's status to SKIPPED
@@ -116,6 +122,22 @@ public class CoordActionSkipXCommand extends CoordinatorXCommand<Void> {
             throw new PreconditionException(ErrorCode.E1100, "The coord action must have status "
                     + CoordinatorAction.Status.WAITING + " or " + CoordinatorAction.Status.READY
                     + " but has status [" + actionBean.getStatus() + "]");
+        }
+    }
+
+    protected void submissionVerifyPrecondition(XCommand<?> command ) throws CommandException {
+        if (command instanceof CoordActionNotificationXCommand) {
+            Configuration conf = null;
+            try {
+                conf = new XConfiguration(new StringReader(actionBean.getRunConf()));
+            }
+            catch (IOException e1) {
+                LOG.warn("Configuration parse error. :" + actionBean.getRunConf());
+                throw new CommandException(ErrorCode.E1005, e1.getMessage(), e1);
+            }
+            if (conf.get(OozieClient.COORD_ACTION_NOTIFICATION_URL) == null) {
+                throw new CommandException(ErrorCode.E0401, OozieClient.COORD_ACTION_NOTIFICATION_URL);
+            }
         }
     }
 }

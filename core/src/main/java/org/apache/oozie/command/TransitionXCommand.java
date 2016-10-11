@@ -18,17 +18,23 @@
 
 package org.apache.oozie.command;
 
+import java.io.IOException;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.client.Job;
+import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.rest.JsonBean;
+import org.apache.oozie.command.coord.CoordActionNotificationXCommand;
 import org.apache.oozie.command.coord.CoordinatorXCommand;
 import org.apache.oozie.executor.jpa.BatchQueryExecutor.UpdateEntry;
 import org.apache.oozie.util.ParamChecker;
+import org.apache.oozie.util.XConfiguration;
 
 /**
  * This is the base commands for all the jobs related commands . This will drive the statuses for all the jobs and all
