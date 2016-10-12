@@ -63,8 +63,6 @@ import org.apache.oozie.util.db.SLADbXOperations;
 public class ActionKillXCommand extends ActionXCommand<Void> {
     private String actionId;
     private String jobId;
-    private WorkflowJobBean wfJob;
-    private WorkflowActionBean wfAction;
     private JPAService jpaService = null;
     private List<UpdateEntry> updateList = new ArrayList<UpdateEntry>();
     private List<JsonBean> insertList = new ArrayList<JsonBean>();

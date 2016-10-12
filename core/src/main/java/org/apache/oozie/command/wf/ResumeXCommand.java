@@ -32,9 +32,11 @@ import org.apache.oozie.action.control.ForkActionExecutor;
 import org.apache.oozie.action.control.JoinActionExecutor;
 import org.apache.oozie.action.control.KillActionExecutor;
 import org.apache.oozie.action.control.StartActionExecutor;
+import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
+import org.apache.oozie.command.XCommand;
 import org.apache.oozie.command.wf.ActionXCommand.ActionExecutorContext;
 import org.apache.oozie.executor.jpa.BatchQueryExecutor.UpdateEntry;
 import org.apache.oozie.executor.jpa.BatchQueryExecutor;
@@ -201,6 +203,16 @@ public class ResumeXCommand extends WorkflowXCommand<Void> {
         if (workflow.getStatus() != WorkflowJob.Status.SUSPENDED) {
             throw new PreconditionException(ErrorCode.E1100, "workflow's status is " + workflow.getStatusStr()
                     + " is not SUSPENDED");
+        }
+    }
+
+    protected void submissionVerifyPrecondition(XCommand<?> command ) throws CommandException {
+        if (command instanceof WorkflowNotificationXCommand) {
+            WorkflowNotificationXCommand notificationXCommand = (WorkflowNotificationXCommand) command;
+            if (notificationXCommand.getName().equals("job.notification") &&
+                    workflow.getWorkflowInstance().getConf().get(OozieClient.WORKFLOW_NOTIFICATION_URL) == null) {
+                throw new CommandException(ErrorCode.E0401, OozieClient.WORKFLOW_NOTIFICATION_URL);
+            }
         }
     }
 }

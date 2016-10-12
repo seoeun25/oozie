@@ -240,7 +240,7 @@ public class TestCoordJobQueryExecutor extends XDataTestCase {
         assertEquals(bean.getGroup(), retBean.getGroup());
         assertEquals(bean.getAppName(), retBean.getAppName());
         assertEquals(bean.getStatusStr(), retBean.getStatusStr());
-        assertNull(retBean.getConf());
+        assertEquals(bean.getConf(), retBean.getConf());
         assertNull(retBean.getJobXmlBlob());
         assertNull(retBean.getOrigJobXmlBlob());
         assertNull(retBean.getSlaXmlBlob());

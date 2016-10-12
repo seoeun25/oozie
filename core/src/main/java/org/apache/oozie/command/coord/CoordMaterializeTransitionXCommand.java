@@ -27,15 +27,16 @@ import org.apache.oozie.ErrorCode;
 import org.apache.oozie.SLAEventBean;
 import org.apache.oozie.client.CoordinatorJob;
 import org.apache.oozie.client.Job;
+import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.SLAEvent.SlaAppType;
 import org.apache.oozie.client.rest.JsonBean;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.MaterializeTransitionXCommand;
 import org.apache.oozie.command.PreconditionException;
+import org.apache.oozie.command.XCommand;
 import org.apache.oozie.command.bundle.BundleStatusUpdateXCommand;
 import org.apache.oozie.coord.CoordUtils;
 import org.apache.oozie.coord.TimeUnit;
-import org.apache.oozie.coord.input.logic.CoordInputLogicEvaluatorUtil;
 import org.apache.oozie.executor.jpa.BatchQueryExecutor;
 import org.apache.oozie.executor.jpa.BatchQueryExecutor.UpdateEntry;
 import org.apache.oozie.executor.jpa.CoordActionsActiveCountJPAExecutor;
@@ -590,6 +591,23 @@ public class CoordMaterializeTransitionXCommand extends MaterializeTransitionXCo
             if (!prevStatus.equals(coordJob.getStatus())) {
                 BundleStatusUpdateXCommand bundleStatusUpdate = new BundleStatusUpdateXCommand(coordJob, prevStatus);
                 bundleStatusUpdate.call();
+            }
+        }
+    }
+
+    protected void submissionVerifyPrecondition(XCommand<?> command ) throws CommandException {
+        if (command instanceof CoordActionNotificationXCommand) {
+            Configuration jobConf = null;
+            try {
+                jobConf = new XConfiguration(new StringReader(coordJob.getConf()));
+            }
+            catch (IOException ioe) {
+                LOG.warn("Configuration parse error. read from DB :" + coordJob.getConf(), ioe);
+                throw new CommandException(ErrorCode.E1005, ioe.getMessage(), ioe);
+            }
+
+            if (jobConf.get(OozieClient.COORD_ACTION_NOTIFICATION_URL) == null) {
+                throw new CommandException(ErrorCode.E0401, OozieClient.COORD_ACTION_NOTIFICATION_URL);
             }
         }
     }

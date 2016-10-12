@@ -21,6 +21,7 @@ package org.apache.oozie.command.wf;
 import org.apache.oozie.AppType;
 import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
+import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.XCommand;
 import org.apache.oozie.command.coord.CoordActionUpdateXCommand;

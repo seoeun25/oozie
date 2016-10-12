@@ -37,9 +37,11 @@ import org.apache.oozie.WorkflowActionBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.action.ActionExecutor;
 import org.apache.oozie.client.Job;
+import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.WorkflowAction;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.command.CommandException;
+import org.apache.oozie.command.XCommand;
 import org.apache.oozie.service.CallbackService;
 import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.ELService;
@@ -66,6 +68,8 @@ public abstract class ActionXCommand<T> extends WorkflowXCommand<T> {
     private static final String INSTRUMENTATION_GROUP = "action.executors";
 
     protected static final String RECOVERY_ID_SEPARATOR = "@";
+    protected WorkflowJobBean wfJob = null;
+    protected WorkflowActionBean wfAction = null;
 
     public ActionXCommand(String name, String type, int priority) {
         super(name, type, priority);
@@ -599,6 +603,16 @@ public abstract class ActionXCommand<T> extends WorkflowXCommand<T> {
             return false;
         }
         return true;
+    }
+
+    protected void submissionVerifyPrecondition(XCommand<?> command ) throws CommandException {
+        if (command instanceof WorkflowNotificationXCommand) {
+            WorkflowNotificationXCommand notificationXCommand = (WorkflowNotificationXCommand) command;
+            if (notificationXCommand.getName().equals("action.notification") &&
+                    wfJob.getWorkflowInstance().getConf().get(OozieClient.ACTION_NOTIFICATION_URL) == null) {
+                throw new CommandException(ErrorCode.E0401, OozieClient.ACTION_NOTIFICATION_URL);
+            }
+        }
     }
 
 }

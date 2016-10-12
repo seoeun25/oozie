@@ -18,14 +18,20 @@
 
 package org.apache.oozie.command.coord;
 
+import java.io.IOException;
 import java.util.Date;
+import java.util.Map;
 
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorJobBean;
 import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.CoordinatorJob;
+import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.WorkflowJob;
+import org.apache.oozie.command.NotificationXCommand;
 import org.apache.oozie.executor.jpa.CoordActionGetForCheckJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordActionQueryExecutor;
 import org.apache.oozie.executor.jpa.CoordActionQueryExecutor.CoordActionQuery;
@@ -33,14 +39,18 @@ import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor.WorkflowJobQuery;
 import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobInsertJPAExecutor;
 import org.apache.oozie.executor.jpa.WorkflowJobQueryExecutor;
+import org.apache.oozie.service.ConfigurationService;
+import org.apache.oozie.service.InstrumentationService;
 import org.apache.oozie.service.JPAService;
 import org.apache.oozie.service.LiteWorkflowStoreService;
+import org.apache.oozie.service.PurgeService;
 import org.apache.oozie.service.Services;
 import org.apache.oozie.service.StatusTransitService;
 import org.apache.oozie.service.WorkflowStoreService;
 import org.apache.oozie.service.StatusTransitService.StatusTransitRunnable;
 import org.apache.oozie.test.XDataTestCase;
 import org.apache.oozie.util.DateUtils;
+import org.apache.oozie.util.Instrumentation;
 import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.workflow.WorkflowApp;
 import org.apache.oozie.workflow.WorkflowInstance;
@@ -55,14 +65,18 @@ import org.apache.oozie.workflow.lite.StartNodeDef;
  * or action number (Id part after "@").
  */
 public class TestCoordActionsKillXCommand extends XDataTestCase {
+    private XConfiguration coordJobConf = new XConfiguration();
     private Services services;
 
     @Override
     protected void setUp() throws Exception {
         super.setUp();
+        coordJobConf.clear();
         setSystemProperty(StatusTransitService.CONF_BACKWARD_SUPPORT_FOR_STATES_WITHOUT_ERROR, "false");
         services = new Services();
-        setClassesToBeExcluded(services.getConf(), new String[] { StatusTransitService.class.getCanonicalName() });
+        setClassesToBeExcluded(services.getConf(), new String[] { StatusTransitService.class.getCanonicalName(),
+                PurgeService.class.getCanonicalName()});
+        services.get(ConfigurationService.class).getConf().set(NotificationXCommand.NOTIFICATION_MAX_RETRIES, "0");
         services.init();
     }
 
@@ -108,6 +122,10 @@ public class TestCoordActionsKillXCommand extends XDataTestCase {
      * @throws Exception
      */
     public void testActionKillCommandDate() throws Exception {
+        killCommandDate();
+    }
+
+    public void killCommandDate() throws Exception{
         JPAService jpaService = services.get(JPAService.class);
         String[] ids = createDBRecords();
 
@@ -115,11 +133,9 @@ public class TestCoordActionsKillXCommand extends XDataTestCase {
         System.out.println(DateUtils.parseDateOozieTZ("2009-12-15T02:00Z"));
         new CoordActionsKillXCommand(ids[0], "date", "2009-12-15T01:00Z::2009-12-15T02:00Z").call();
         CoordinatorActionBean action = jpaService.execute(new CoordActionGetForCheckJPAExecutor(ids[1]));
-        System.out.println(action.getNominalTime());
         assertEquals(CoordinatorAction.Status.KILLED, action.getStatus());
 
         action = jpaService.execute(new CoordActionGetForCheckJPAExecutor(ids[2]));
-        System.out.println(action.getNominalTime());
         assertEquals(CoordinatorAction.Status.KILLED, action.getStatus());
 
         sleep(100);
@@ -134,6 +150,46 @@ public class TestCoordActionsKillXCommand extends XDataTestCase {
 
         job = jpaService.execute(new CoordJobGetJPAExecutor(ids[0]));
         assertEquals(CoordinatorJob.Status.KILLED, job.getStatus());
+    }
+
+    /**
+     * Test the CoordActionNotification is queued when COORD_ACTION_NOTIFICATION_URL is configured.
+     * @throws Exception
+     */
+    public void testQueueNotification() throws Exception{
+        coordJobConf.set(OozieClient.COORD_ACTION_NOTIFICATION_URL,
+                "/notification" + "/coord?actionId=$actionId&status=$status");
+        killCommandDate();
+
+        long queued = instrumentaionOfQueued();
+        // kill
+        // coord_action_notification, coord_action_notifiction
+        assertEquals(3 + 1, queued); // 1 = CompositeCallable
+    }
+
+    /**
+     * Test the CoordActionNotification skip queueing when COORD_ACTION_NOTIFICATION_URL is not configured.
+     * @throws Exception
+     */
+    public void testSkipNotification() throws Exception {
+        killCommandDate();
+
+        long queued = instrumentaionOfQueued();
+        // kill
+        assertEquals(1, queued);
+    }
+
+    private long instrumentaionOfQueued() {
+        long queued = 0;
+        InstrumentationService instrumentationService = Services.get().get(InstrumentationService.class);
+        Map<String, Map<String, Instrumentation.Element<Long>>> map = instrumentationService.get().getCounters();
+        if (map.containsKey("callablequeue")) {
+            Map<String, Instrumentation.Element<Long>> queueInstrumentation = map.get("callablequeue");
+            if (queueInstrumentation.containsKey("queued")) {
+                queued = queueInstrumentation.get("queued").getValue();
+            }
+        }
+        return queued;
     }
 
     private String[] createDBRecords() throws Exception {
@@ -165,6 +221,16 @@ public class TestCoordActionsKillXCommand extends XDataTestCase {
         jpaService.execute(new WorkflowJobInsertJPAExecutor(wf));
 
         return new String[] { job.getId(), action1.getId(), action2.getId(), wf.getId() };
+    }
+
+    protected Configuration getCoordConf(Path appPath) throws IOException {
+        Configuration configuration = super.getCoordConf(appPath);
+        if (coordJobConf.size() > 0) {
+            for (Map.Entry<String, String> entry: coordJobConf) {
+                configuration.set(entry.getKey(), entry.getValue());
+            }
+        }
+        return configuration;
     }
 
 }

@@ -72,8 +72,6 @@ public class ActionStartXCommand extends ActionXCommand<org.apache.oozie.command
 
     private String jobId = null;
     protected String actionId = null;
-    protected WorkflowJobBean wfJob = null;
-    protected WorkflowActionBean wfAction = null;
     private JPAService jpaService = null;
     private ActionExecutor executor = null;
     private List<UpdateEntry> updateList = new ArrayList<UpdateEntry>();

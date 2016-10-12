@@ -18,8 +18,12 @@
 
 package org.apache.oozie.command.coord;
 
+import java.io.IOException;
+import java.io.StringReader;
 import java.util.Date;
 import java.util.List;
+
+import org.apache.hadoop.conf.Configuration;
 import org.apache.oozie.CoordinatorActionBean;
 import org.apache.oozie.CoordinatorActionInfo;
 import org.apache.oozie.CoordinatorJobBean;
@@ -27,16 +31,17 @@ import org.apache.oozie.ErrorCode;
 import org.apache.oozie.XException;
 import org.apache.oozie.client.CoordinatorAction;
 import org.apache.oozie.client.CoordinatorJob;
+import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.rest.RestConstants;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.KillTransitionXCommand;
 import org.apache.oozie.command.PreconditionException;
+import org.apache.oozie.command.XCommand;
 import org.apache.oozie.command.wf.KillXCommand;
 import org.apache.oozie.coord.CoordUtils;
 import org.apache.oozie.executor.jpa.BatchQueryExecutor.UpdateEntry;
 import org.apache.oozie.executor.jpa.CoordActionQueryExecutor.CoordActionQuery;
 import org.apache.oozie.executor.jpa.BatchQueryExecutor;
-import org.apache.oozie.executor.jpa.CoordJobGetJPAExecutor;
 import org.apache.oozie.executor.jpa.CoordJobQueryExecutor;
 import org.apache.oozie.executor.jpa.CoordJobQueryExecutor.CoordJobQuery;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
@@ -46,6 +51,7 @@ import org.apache.oozie.service.Services;
 import org.apache.oozie.util.InstrumentUtils;
 import org.apache.oozie.util.LogUtils;
 import org.apache.oozie.util.ParamChecker;
+import org.apache.oozie.util.XConfiguration;
 
 /**
  * Kill coordinator actions by a range of dates (nominal time) or action number.
@@ -162,6 +168,23 @@ public class CoordActionsKillXCommand extends KillTransitionXCommand<Coordinator
 
     @Override
     public void notifyParent() throws CommandException {
+    }
+
+    protected void submissionVerifyPrecondition(XCommand<?> command ) throws CommandException {
+        if (command instanceof CoordActionNotificationXCommand) {
+            Configuration jobConf = null;
+            try {
+                jobConf = new XConfiguration(new StringReader(coordJob.getConf()));
+            }
+            catch (IOException ioe) {
+                LOG.warn("Configuration parse error. read from DB :" + coordJob.getConf(), ioe);
+                throw new CommandException(ErrorCode.E1005, ioe.getMessage(), ioe);
+            }
+
+            if (jobConf.get(OozieClient.COORD_ACTION_NOTIFICATION_URL) == null) {
+                throw new CommandException(ErrorCode.E0401, OozieClient.COORD_ACTION_NOTIFICATION_URL);
+            }
+        }
     }
 
 }

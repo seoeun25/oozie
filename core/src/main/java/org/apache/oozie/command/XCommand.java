@@ -183,6 +183,12 @@ public abstract class XCommand<T> implements XCallable<T> {
      * @param msDelay delay in milliseconds.
      */
     protected void queue(XCommand<?> command, long msDelay) {
+        try {
+            submissionVerifyPrecondition(command);
+        } catch (CommandException e) {
+            LOG.debug(String.format("Unable to queue command [%s] : %s", command.getName(), e.getMessage()));
+            return;
+        }
         if (commandQueue == null) {
             commandQueue = new HashMap<Long, List<XCommand<?>>>();
         }
@@ -453,6 +459,15 @@ public abstract class XCommand<T> implements XCallable<T> {
      * @throws CommandException thrown if the precondition is not met.
      */
     protected abstract void verifyPrecondition() throws CommandException, PreconditionException;
+
+    /**
+     * Verify the precondition for the given command before queueing. If it fail, the command could not be queued.
+     * @param command the command to be queued
+     * @throws CommandException thrown if the precondition for command is not met
+     */
+    protected void submissionVerifyPrecondition(XCommand<?> command ) throws CommandException {
+
+    }
 
     /**
      * Command execution body.

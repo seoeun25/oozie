@@ -58,8 +58,6 @@ public class ActionCheckXCommand extends ActionXCommand<Void> {
     private String actionId;
     private String jobId;
     private int actionCheckDelay;
-    private WorkflowJobBean wfJob = null;
-    private WorkflowActionBean wfAction = null;
     private ActionExecutor executor = null;
     private List<UpdateEntry> updateList = new ArrayList<UpdateEntry>();
     private boolean generateEvent = false;
