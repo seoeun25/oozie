@@ -313,6 +313,7 @@ public class CoordActionQueryExecutor extends
                 bean.setPending((Integer) arr[4]);
                 bean.setNominalTime((Timestamp) arr[5]);
                 bean.setCreatedTime((Timestamp) arr[6]);
+                bean.setRunConfBlob((StringBlob) arr[7]);
                 break;
             case  GET_COORD_ACTIONS_FOR_RECOVERY_OLDER_THAN:
                 arr = (Object[]) ret;

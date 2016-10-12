@@ -24,6 +24,7 @@ import org.apache.oozie.LocalOozieClient;
 import org.apache.oozie.LocalOozieClientCoord;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.service.CallbackService;
+import org.apache.oozie.service.ConfigurationService;
 import org.apache.oozie.service.CoordinatorEngineService;
 import org.apache.oozie.service.DagEngineService;
 import org.apache.oozie.service.Services;
@@ -31,7 +32,11 @@ import org.apache.oozie.service.XLogService;
 import org.apache.oozie.servlet.CallbackServlet;
 import org.apache.oozie.test.EmbeddedServletContainer;
 import org.apache.oozie.util.ParamChecker;
+import org.apache.oozie.util.XConfiguration;
 import org.apache.oozie.util.XLog;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * LocalOozie runs workflows in an embedded Oozie instance . <p> LocalOozie is meant for development/debugging purposes
@@ -47,10 +52,44 @@ public class LocalOozie {
      * @throws Exception if LocalOozie could not be started.
      */
     public synchronized static void start() throws Exception {
+        Map<String, Class> servletMap = new HashMap<>();
+        servletMap.put("/callback", CallbackServlet.class);
+        start(new XConfiguration(), null, servletMap);
+    }
+
+    /**
+     * Start LocalOozie.
+     * @param oozieConf the configuration for oozie services
+     * @param excludedServices the services to be exclude during test
+     * @param servletPathAndClass the pair of servletPath(String) and servletClass(Class)
+     * @throws Exception
+     */
+    public synchronized static void start(XConfiguration oozieConf, String[] excludedServices,
+                                          Object... servletPathAndClass) throws Exception {
+        if ((servletPathAndClass.length % 2) != 0) {
+            throw new IllegalArgumentException("Servlet path should be pair with class");
+        }
+        Map<String,Class> servletPathClassMap = new HashMap<>();
+        for (int i = 0; i < servletPathAndClass.length; i += 2) {
+            String path = servletPathAndClass[i].toString();
+            Class claz = (Class) servletPathAndClass[i+1];
+            servletPathClassMap.put(path, claz);
+        }
+        start(oozieConf, excludedServices, servletPathClassMap);
+    }
+
+    /**
+     * Start LocalOozie.
+     *
+     * @param oozieConf the configuration for oozie services
+     * @param servletPathClassMap the pair of servletPath and servletClass.
+     * @throws Exception if LocalOozie could not be started.
+     */
+    public synchronized static void start(XConfiguration oozieConf, String[] excludedServices,
+                                          Map<String,Class> servletPathClassMap) throws Exception {
         if (localOozieActive) {
             throw new IllegalStateException("LocalOozie is already initialized");
         }
-
         String log4jFile = System.getProperty(XLogService.LOG4J_FILE, null);
         String oozieLocalLog = System.getProperty("oozielocal.log", null);
         if (log4jFile == null) {
@@ -61,7 +100,22 @@ public class LocalOozie {
         }
 
         localOozieActive = true;
-        new Services().init();
+        Services services = new Services();
+        if (excludedServices != null && excludedServices.length > 0) {
+            String classes = services.get(ConfigurationService.class).getConf().get(Services.CONF_SERVICE_CLASSES);
+            StringBuilder builder = new StringBuilder(classes);
+            for (String s : excludedServices) {
+                int index = builder.indexOf(s);
+                if (index != -1) {
+                    builder.replace(index, index + s.length() + 1, "");
+                }
+            }
+            services.get(ConfigurationService.class).getConf().set(Services.CONF_SERVICE_CLASSES, new String(builder));
+        }
+        for (Map.Entry<String, String> entry: oozieConf) {
+            services.get(ConfigurationService.class).getConf().set(entry.getKey(), entry.getValue());
+        }
+        services.init();
 
         if (log4jFile != null) {
             System.setProperty(XLogService.LOG4J_FILE, log4jFile);
@@ -77,7 +131,17 @@ public class LocalOozie {
         }
 
         container = new EmbeddedServletContainer("oozie");
-        container.addServletEndpoint("/callback", CallbackServlet.class);
+        for (Map.Entry<String, Class> entry: servletPathClassMap.entrySet()) {
+            container.addServletEndpoint(entry.getKey(), entry.getValue());
+            XLog.getLog(LocalOozie.class).info("LocalOozie servlet container endpoint : [{0}] = [{1}]", entry.getKey(),
+                    entry.getValue().getName());
+        }
+        // callback servlet is default
+        if (!servletPathClassMap.containsKey("/callback")) {
+            container.addServletEndpoint("/callback", CallbackServlet.class);
+            XLog.getLog(LocalOozie.class).info("LocalOozie servlet container endpoint : [{0}] = [{1}]", "/callback",
+                    CallbackServlet.class.getName());
+        }
         container.start();
         String callbackUrl = container.getServletURL("/callback");
         Services.get().getConf().set(CallbackService.CONF_BASE_URL, callbackUrl);
@@ -191,6 +255,19 @@ public class LocalOozie {
         ParamChecker.notEmpty(user, "user");
         CoordinatorEngine coordEngine = Services.get().get(CoordinatorEngineService.class).getCoordinatorEngine(user);
         return new LocalOozieClientCoord(coordEngine);
+    }
+
+    /**
+     * Return the full URL (including protocol, host, port, context path, servlet path) for a servlet path.
+     *
+     * @param servletPath the path which will be expanded to a full URL.
+     * @return URL to the servlet.
+     */
+    public static String getServletURL(String servletPath) {
+        if (!localOozieActive) {
+            throw new IllegalStateException("LocalOozie is not initialized");
+        }
+       return container.getServletURL(servletPath);
     }
 
 }

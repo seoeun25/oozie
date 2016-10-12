@@ -29,6 +29,7 @@ import org.apache.oozie.util.XLog;
 public abstract class NotificationXCommand extends XCommand<Void> {
 
     public static final String NOTIFICATION_URL_CONNECTION_TIMEOUT_KEY = "oozie.notification.url.connection.timeout";
+    public static final String NOTIFICATION_MAX_RETRIES = "oozie.notification.max.retries";
     public static final String NOTIFICATION_PROXY_KEY = "oozie.notification.proxy";
 
     protected int retries = 0;
@@ -92,7 +93,7 @@ public abstract class NotificationXCommand extends XCommand<Void> {
     }
 
     protected void handleRetry() {
-        if (retries < 3) {
+        if (retries < ConfigurationService.getInt(NOTIFICATION_MAX_RETRIES)) {
             retries++;
             this.resetUsed();
             queue(this, 60 * 1000);

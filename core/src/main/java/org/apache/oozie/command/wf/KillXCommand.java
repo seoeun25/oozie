@@ -19,6 +19,7 @@
 package org.apache.oozie.command.wf;
 
 import org.apache.oozie.action.control.ControlNodeActionExecutor;
+import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.WorkflowJob;
 import org.apache.oozie.client.SLAEvent.SlaAppType;
 import org.apache.oozie.client.SLAEvent.Status;
@@ -30,6 +31,7 @@ import org.apache.oozie.WorkflowJobBean;
 import org.apache.oozie.XException;
 import org.apache.oozie.command.CommandException;
 import org.apache.oozie.command.PreconditionException;
+import org.apache.oozie.command.XCommand;
 import org.apache.oozie.executor.jpa.BatchQueryExecutor;
 import org.apache.oozie.executor.jpa.JPAExecutorException;
 import org.apache.oozie.executor.jpa.WorkflowActionQueryExecutor.WorkflowActionQuery;
@@ -197,6 +199,16 @@ public class KillXCommand extends WorkflowXCommand<Void> {
 
         LOG.info("ENDED WorkflowKillXCommand for jobId=" + wfId);
         return null;
+    }
+
+    protected void submissionVerifyPrecondition(XCommand<?> command ) throws CommandException {
+        if (command instanceof WorkflowNotificationXCommand) {
+            WorkflowNotificationXCommand notificationXCommand = (WorkflowNotificationXCommand) command;
+            if (notificationXCommand.getName().equals("job.notification") &&
+                    wfJob.getWorkflowInstance().getConf().get(OozieClient.WORKFLOW_NOTIFICATION_URL) == null) {
+                throw new CommandException(ErrorCode.E0401, OozieClient.WORKFLOW_NOTIFICATION_URL);
+            }
+        }
     }
 
 }
